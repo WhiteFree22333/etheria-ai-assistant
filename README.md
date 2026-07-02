@@ -1,0 +1,118 @@
+# 瑞玛丽小助手 V1.0 — 伊瑟 AI 自动化助手
+
+> 一个不会写 Python 的游戏 UP 主，用 AI 协作 15 天做出来的桌面应用。
+
+🚀 **零门槛**：下载、解压、双击 exe、勾选功能、点开始。不需要 Python，不需要命令行。
+
+🔒 **纯模拟点击**：不修改游戏文件、不注入进程、不影响 PvP 公平。原理同 March7thAssistant。
+
+---
+
+## 功能
+
+### 日常
+
+| 功能 | 说明 |
+|---|---|
+| **智壳** | 6 角色 × 2 难度（炼狱/修罗），自动滚动找角色 |
+| **源器** | 4 角色 × 2 难度，双倍体力勾选 |
+| **潜能/经验** | 6 种类型（经验/神理/妖异/虚空/破序/恒定） |
+| **公会全套** | 竞技场自动、公会签到、锚点勘测、幻音剧场、协会共助、每周任务领取、一键领取 |
+| **竞技场** | 积分检测 + 批量对战 + 票尽停止 |
+
+### 试炼
+
+| 功能 | 说明 |
+|---|---|
+| **源网征令** | 542 行自治探索系统：色号识别红点 → 外围优先排序 → 逐个探索 → 选牌 OCR 优先匹配 |
+
+### 活动
+
+| 功能 | 说明 |
+|---|---|
+| **暗笼激斗** | 挑战 → 限时活动 → 图标 → 前往挑战 → 战斗 |
+| **超能二十一** | 匹配 → 托管循环 → 继续弹窗重托管 → 再来一局 |
+
+---
+
+## 技术栈
+
+| 层 | 技术 |
+|---|---|
+| **前端** | Vue 3 + TypeScript + Vite |
+| **桌面框架** | pywebview |
+| **图像识别** | OpenCV 模板匹配（15 尺度 0.5x-2.67x）+ EasyOCR（CLAHE + 2x 放大 + 拼接兜底） |
+| **截图引擎** | PrintWindow / DXCam / BitBlt / MSS 四路截图 |
+| **输入模拟** | PostMessage 后台点击 + SendInput 鼠标拖动 |
+| **打包分发** | PyInstaller → 单文件 exe（约 400MB） |
+
+---
+
+## 快速开始（玩家）
+
+1. **下载** `瑞玛丽小助手_V1.0.zip` 并解压
+2. **双击** `瑞玛丽小助手.exe`
+3. **启动伊瑟游戏**，确认窗口标题包含 "伊瑟"
+4. 在左侧面板勾选要执行的任务
+5. 点 **▶ 一键执行** 或各面板的 **▶ 开始执行**
+
+> 操作手册：[飞书文档](https://jcndt0fbap7l.feishu.cn/wiki/AM2kwUeYdiPX9vkN9VgczLJ8nZd)
+
+---
+
+## 开发（本地调试）
+
+```bash
+# 后端
+pip install -r requirements.txt
+python ui/app.py
+
+# 前端（另一个终端）
+cd frontend && npm install && npm run dev
+```
+
+Vite 开发服务器启动后，pywebview 会自动连接 `localhost:5173` 启用热更新。
+
+---
+
+## 项目结构
+
+```
+etheria-ai-assistant/
+├── ui/app.py                 # pywebview 主入口 + API 桥接
+├── core/
+│   ├── _base/                # 基础能力层（截图/模板匹配/OCR/输入/窗口）
+│   ├── _common/              # 通用业务层（战斗公有方法）
+│   ├── daily/                # 日常功能
+│   ├── events/               # 活动功能
+│   └── rta/                  # RTA（预留）
+├── frontend/src/
+│   ├── components/           # Vue 组件
+│   │   ├── daily/            # 日常面板
+│   │   └── events/           # 活动面板
+│   └── composables/          # 全局执行/日志
+├── templates/
+│   ├── richang/              # 日常模板（106 张）
+│   ├── shilian/              # 试炼模板（18 张）
+│   └── huodong/              # 活动模板
+└── hooks/                    # PyInstaller 打包钩子
+```
+
+---
+
+## 作者
+
+**WhiteFree** — 伊瑟游戏 UP 主，年度创作者，亚洲赛 16 强。
+不会写 Python，用 Claude Code 做出来了。🤖✨
+
+---
+
+## 致谢
+
+- [March7thAssistant](https://github.com/moesnow/March7thAssistant) — 崩铁自动化助手，灵感来源
+- [ok-etheria](https://github.com/ok-oldking/ok-etheria) — 伊瑟一键收菜，同行的先行者
+- [Anthropic Claude Code](https://claude.ai) — AI 协作伙伴
+
+## 协议
+
+MIT License — 免费开源，仅供学习交流。
