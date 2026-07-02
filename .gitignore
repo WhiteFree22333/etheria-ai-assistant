@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+venv/
+*.egg-info/
+
+# PyInstaller
+build/
+dist/
+
+# IDE
+.vscode/
+.idea/
+
+# 环境变量
+.env
+
+# 调试
+debug_screenshots/
+
+# 系统文件
+Thumbs.db
+.DS_Store
+*.log
+
+# Node / 前端
+frontend/node_modules/
+frontend/.npm-cache/
+frontend/dist/
