@@ -791,12 +791,47 @@ def run():
             static_dir = os.path.join(sys._MEIPASS, 'ui', 'static')
         else:
             static_dir = os.path.join(BASE_DIR, 'ui', 'static')
-        url = os.path.join(static_dir, 'index.html')
-        if not os.path.isfile(url):
-            print(f'[App] 静态文件不存在: {url}')
-            print('[App] 请先运行: cd frontend && npm run build')
+        index_path = os.path.join(static_dir, 'index.html')
+        _errors = []
+        url = ''
+
+        if not os.path.isfile(index_path):
+            _errors.append(f'静态文件不存在: {index_path}')
         else:
-            print(f'[App] 使用构建文件: {url}')
+            # 尝试启动本地 HTTP 服务器避免 file:// 中文路径编码问题
+            try:
+                import http.server, socket, threading
+                _port = None
+                for _p in range(49152, 49216):
+                    try:
+                        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                            s.bind(('127.0.0.1', _p))
+                            _port = _p
+                            break
+                    except OSError:
+                        continue
+                if _port is not None:
+                    class _StaticHandler(http.server.SimpleHTTPRequestHandler):
+                        def __init__(self, *args, **kwargs):
+                            super().__init__(*args, directory=static_dir, **kwargs)
+                    _httpd = http.server.HTTPServer(('127.0.0.1', _port), _StaticHandler)
+                    threading.Thread(target=_httpd.serve_forever, daemon=True).start()
+                    url = f'http://127.0.0.1:{_port}/index.html'
+                else:
+                    _errors.append('无法绑定 HTTP 端口')
+            except Exception as e:
+                _errors.append(f'HTTP 服务器启动失败: {e}')
+
+            # 兜底用 file://
+            if not url:
+                url = index_path
+
+        # 如果有错误但 file:// 可能能用 → 尝试加载，并注入错误提示
+        if _errors:
+            _err_html = '<br>'.join(_errors)
+            print('[App] 启动警告:', _err_html)
+        if not url:
+            url = f'data:text/html,<html><body style="background:#1a1a2e;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif"><div style="text-align:center"><h2>⚠️ 加载失败</h2><p>{"<br>".join(_errors)}</p></div></body></html>'
 
     window = webview.create_window(
         title='瑞玛丽小助手V1.0',
@@ -811,7 +846,7 @@ def run():
 
     api.set_window(window)
 
-    webview.start(on_loaded, window, debug=('--debug' in sys.argv))
+    webview.start(on_loaded, window, debug=('--debug' in sys.argv), gui='edgechromium')
 
 
 if __name__ == '__main__':

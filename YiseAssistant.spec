@@ -20,6 +20,7 @@ a = Analysis(
     hiddenimports=[
         'webview',
         'webview.platforms.winforms',
+        'webview.platforms.edgechromium',
         'PIL',
         'cv2',
         'numpy',
@@ -38,6 +39,7 @@ a = Analysis(
         'core.daily',
         'core.events',
         'core.rta',
+        'http.server',
     ],
     hookspath=['hooks'],
     hooksconfig={},

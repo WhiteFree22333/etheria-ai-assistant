@@ -206,22 +206,15 @@ class GameBot:
         如果画面中有「返回」按钮，点击它返回主界面。
         先识别「返回.png」，没找到则识别「返回2.png」，
         两个都找不到说明已回到主界面。
-
-        Args:
-            back_template: 第一个返回按钮模板（用于兼容旧调用）
-            max_retries: 最多点击几次返回
-            threshold: 匹配置信度阈值
-
-        Returns:
-            True 表示至少点击了一次返回，False 表示本来就已在主界面
+        多尺度匹配关闭：返回按钮尺寸在游戏中固定不变，单尺度更精准防误匹配。
         """
-        # 两个返回模板，依次尝试
         back_templates = [back_template, tpl("返回2.png")]
+        thr = threshold or 0.82  # 返回按钮特征明显，阈值提到 0.82 防误判
         clicked = False
         for i in range(max_retries):
             match = None
             for tpl_name in back_templates:
-                match = self.find_image(tpl_name, threshold)
+                match = self.find_image(tpl_name, thr, multi_scale=False)
                 if match is not None:
                     break
 
