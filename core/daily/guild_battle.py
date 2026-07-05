@@ -166,6 +166,7 @@ def run_guild_anchor(bot) -> bool:
         time.sleep(2)
         if not enter_and_wait_battle(bot, 'Buff.png'):
             return False
+        time.sleep(4)
         exit_battle(bot, 30, 30)
         bot._log('[OK] 锚点勘测完成')
         bot._log('=' * 40)
