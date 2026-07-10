@@ -39,8 +39,7 @@ def run_yuanqi_battle(bot, character_name: str, difficulty: str = '地狱四', s
         # ---- 第 5 步：超出上限弹窗 ----
         bot._log('第5步：检查是否超出上限...')
         # if not handle_over_limit(bot):
-        if not handle_cleanup_popup(bot):
-            return False
+        handle_cleanup_popup(bot)
 
         # ---- 第 6 步：一层层点击角色（不能滚动） ----
         bot._log(f'第6步：定位 {character_name}...')
@@ -190,10 +189,7 @@ def run_yuanqi_battle(bot, character_name: str, difficulty: str = '地狱四', s
 
         # 战斗入场后可能弹出超出上限
         bot._log('检查战斗后上限弹窗...')
-
-        if not handle_cleanup_popup(bot):
-            bot._log('[FAIL] 战斗后超出上限，停止')
-            return False
+        handle_cleanup_popup(bot)
         # if not handle_over_limit(bot):
 
         #     return False
