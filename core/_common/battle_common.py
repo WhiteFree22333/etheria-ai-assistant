@@ -171,24 +171,24 @@ def enter_dungeon(bot, entry_template: str) -> bool:
         tab_pos = bot.game_window.left + tab_match.x, bot.game_window.top + tab_match.y
         post_click(hwnd, tab_pos[0], tab_pos[1])
         time.sleep(0.5)
-        if wait_for_image(bot, '挑战.png', timeout=5) is None:
+        if wait_for_image(bot, '挑战.png') is None:
             bot._log('[FAIL] 失败：点击 tab页 后侧边栏未弹出')
             return False
         bot._log('侧边栏已弹出')
     else:
         bot._log('侧边栏已打开，跳过点击')
 
-    pos = wait_for_image(bot, '挑战.png', timeout=5)
+    pos = wait_for_image(bot, '挑战.png')
     if pos is None:
         bot._log('[FAIL] 失败：未检测到挑战按钮')
         return False
     bot._log(f'点击挑战 ({pos[0]}, {pos[1]})...')
     post_click(hwnd, pos[0], pos[1])
-    wait_for_image_gone(bot, '挑战.png', timeout=5)
+    wait_for_image_gone(bot, '挑战.png')
     time.sleep(0.5)
 
     bot._log(f'查找入口: {entry_template}...')
-    pos = wait_for_image(bot, entry_template, timeout=5)
+    pos = wait_for_image(bot, entry_template)
     if pos is None:
         bot._log(f'[FAIL] 失败：未检测到 {entry_template}')
         return False
@@ -204,7 +204,7 @@ def enter_dungeon(bot, entry_template: str) -> bool:
 # 打开侧边栏（通用入口）
 # ============================================================
 
-def _click_and_wait_gone(bot, hwnd, x, y, template_name, timeout=5):
+def _click_and_wait_gone(bot, hwnd, x, y, template_name):
     """点击 + 等图标消失。post_click 自身已双发，这里只需等结果。"""
     post_click(hwnd, x, y)
     time.sleep(0.3)
@@ -234,12 +234,12 @@ def open_sidebar(bot) -> bool:
 
 def handle_over_limit(bot) -> bool:
     hwnd = bot.game_window.hwnd
-    over = wait_for_image(bot, '源器超出上限.png', timeout=5)
+    over = wait_for_image(bot, '源器超出上限.png')
     if over is None:
         over = wait_for_image(bot, '源器超出上限2.png', timeout=3)
     if over is not None:
         bot._log('检测到源器超出上限弹窗！')
-        close = wait_for_image(bot, '知道了.png', timeout=5)
+        close = wait_for_image(bot, '知道了.png')
         if close is None:
             bot._log('[FAIL] 失败：未检测到知道了按钮')
             return False
@@ -306,7 +306,7 @@ def enter_guild_home(bot) -> bool:
         bot._log('[FAIL] 失败：侧边栏未能打开')
         return False
     bot._log('点击超链协会...')
-    pos = wait_for_image(bot, '超链协会.png', timeout=5)
+    pos = wait_for_image(bot, '超链协会.png')
     if pos is None:
         bot._log('[FAIL] 失败：未检测到超链协会')
         return False
@@ -447,7 +447,7 @@ def enter_and_wait_battle(bot, battle_end_template='Buff.png', timeout=None):
     if not setup_preset(bot):
         return False
     bot._log('点击 F战斗...')
-    pos = wait_for_image(bot, 'F战斗.png', timeout=5)
+    pos = wait_for_image(bot, 'F战斗.png')
     if pos is None:
         bot._log('[FAIL] 失败：未检测到 F战斗')
         return False
@@ -538,7 +538,7 @@ def handle_cleanup_popup(bot):
         _, max_val, _, _ = cv2.minMaxLoc(cv2.matchTemplate(scr, tpl_img, cv2.TM_CCOEFF_NORMED))
         if max_val >= GAME_CONFIG.template_threshold:
             bot._log('检测到前往清理弹窗')
-            ok = wait_for_image(bot, '知道了.png', timeout=5)
+            ok = wait_for_image(bot, '知道了.png')
             if ok is not None:
                 post_click(gw.hwnd, ok[0], ok[1])
                 bot._log('已点击知道了')

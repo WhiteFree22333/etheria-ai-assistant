@@ -88,28 +88,28 @@ def run_chaoneng_battle(bot, character_name: str = '', difficulty: str = '普通
             return False
 
         bot._log('点击挑战...')
-        pos = wait_for_image(bot, '挑战.png', timeout=5)
+        pos = wait_for_image(bot, '挑战.png')
         if pos is None:
             return False
         post_click(hwnd, pos[0], pos[1])
         time.sleep(2)
 
         bot._log('点击限时活动...')
-        pos = wait_for_image(bot, '限时活动.png', timeout=5)
+        pos = wait_for_image(bot, '限时活动.png')
         if pos is None:
             return False
         post_click(hwnd, pos[0], pos[1])
         time.sleep(2)
 
         bot._log('点击超能二十一图标...')
-        pos = wait_for_image(bot, _htpl('超能二十一图标.png'), timeout=5)
+        pos = wait_for_image(bot, _htpl('超能二十一图标.png'))
         if pos is None:
             return False
         post_click(hwnd, pos[0], pos[1])
         time.sleep(2)
 
         bot._log('点击超能二十一匹配...')
-        pos = wait_for_image(bot, _htpl('超能二十一匹配.png'), timeout=5)
+        pos = wait_for_image(bot, _htpl('超能二十一匹配.png'))
         if pos is None:
             return False
         post_click(hwnd, pos[0], pos[1])

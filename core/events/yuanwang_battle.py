@@ -220,7 +220,7 @@ def _quick_clean_and_recruit_exit(bot):
     hwnd = bot.game_window.hwnd
     time.sleep(8)
     # 步骤 7：源网快速清理
-    pos = wait_for_image(bot, _stpl('源网快速清理可点击.png'), timeout=5)
+    pos = wait_for_image(bot, _stpl('源网快速清理可点击.png'))
     if pos is not None:
         bot._log('点击源网快速清理...')
         post_click(hwnd, pos[0], pos[1])
@@ -230,7 +230,7 @@ def _quick_clean_and_recruit_exit(bot):
         bot._log('未找到源网快速清理，跳过')
 
     # 步骤 8：已成功招募弹窗
-    pos = wait_for_image(bot, _stpl('已成功招募.png'), timeout=5)
+    pos = wait_for_image(bot, _stpl('已成功招募.png'))
     if pos is not None:
         bot._log('检测到已成功招募弹窗，二次退出...')
         exit_battle(bot, 30, 30)
@@ -305,7 +305,7 @@ def run_yuanwang_battle(bot, character_name: str = '', difficulty: str = '普通
         if not open_sidebar(bot):
             return False
         bot._log('点击挑战...')
-        pos = wait_for_image(bot, '挑战.png', timeout=5)
+        pos = wait_for_image(bot, '挑战.png')
         if pos is None:
             return False
         post_click(hwnd, pos[0], pos[1])
@@ -313,7 +313,7 @@ def run_yuanwang_battle(bot, character_name: str = '', difficulty: str = '普通
 
         # === 3. 点试炼挑战（richang 模板） ===
         bot._log('点击试炼挑战...')
-        pos = wait_for_image(bot, '试炼挑战.png', timeout=5)
+        pos = wait_for_image(bot, '试炼挑战.png')
         if pos is None:
             return False
         post_click(hwnd, pos[0], pos[1])
@@ -321,7 +321,7 @@ def run_yuanwang_battle(bot, character_name: str = '', difficulty: str = '普通
 
         # === 4. 点源网征令入口（shilian 模板） ===
         bot._log('点击源网征令入口...')
-        pos = wait_for_image(bot, _stpl('源网征令入口.png'), timeout=5)
+        pos = wait_for_image(bot, _stpl('源网征令入口.png'))
         if pos is None:
             return False
         post_click(hwnd, pos[0], pos[1])
@@ -337,14 +337,14 @@ def run_yuanwang_battle(bot, character_name: str = '', difficulty: str = '普通
         if skip_to_card:
             bot._log('直接进入选牌流程...')
             _select_card_by_ocr(bot)
-            pos = wait_for_image(bot, _stpl('集成确认按钮.png'), timeout=5)
+            pos = wait_for_image(bot, _stpl('集成确认按钮.png'))
             if pos is not None:
                 post_click(hwnd, pos[0], pos[1])
                 time.sleep(2)
 
-                pos = wait_for_image(bot, _stpl('货箱集成器.png'), timeout=5)
+                pos = wait_for_image(bot, _stpl('货箱集成器.png'))
                 if pos is not None:
-                    pos = wait_for_image(bot, _stpl('货箱集成打开.png'), timeout=5)
+                    pos = wait_for_image(bot, _stpl('货箱集成打开.png'))
                     if pos is not None:
                         bot._log('点击货箱集成打开...')
                         post_click(hwnd, pos[0], pos[1])
@@ -353,7 +353,7 @@ def run_yuanwang_battle(bot, character_name: str = '', difficulty: str = '普通
         else:
             # === 5. 点源网征令前往行动（shilian 模板） ===
             bot._log('点击源网征令前往行动...')
-            pos = wait_for_image(bot, _stpl('源网征令前往行动.png'), timeout=5)
+            pos = wait_for_image(bot, _stpl('源网征令前往行动.png'))
             if pos is None:
                 return False
             post_click(hwnd, pos[0], pos[1])
@@ -419,7 +419,7 @@ def run_yuanwang_battle(bot, character_name: str = '', difficulty: str = '普通
                 post_click(hwnd, rx, ry)
                 time.sleep(2)
 
-                pos = wait_for_image(bot, _stpl('源网前往挑战.png'), timeout=5)
+                pos = wait_for_image(bot, _stpl('源网前往挑战.png'))
                 if pos is not None:
                     bot._log(f'红点 #{ri+1} 切到挑战页面')
                     challenge_pos = pos
@@ -489,7 +489,7 @@ def run_yuanwang_battle(bot, character_name: str = '', difficulty: str = '普通
             time.sleep(2)
 
             bot._log('点击源网确认...')
-            pos = wait_for_image(bot, _stpl('源网确认.png'), timeout=5)
+            pos = wait_for_image(bot, _stpl('源网确认.png'))
             if pos is None:
                 return False
             post_click(hwnd, pos[0], pos[1])
@@ -501,7 +501,7 @@ def run_yuanwang_battle(bot, character_name: str = '', difficulty: str = '普通
 
             # --- 战斗后：第二场 or 选牌 ---
             time.sleep(2)
-            pos = wait_for_image(bot, _stpl('源网确认.png'), timeout=5)
+            pos = wait_for_image(bot, _stpl('源网确认.png'))
             if pos is not None:
                 bot._log('检测到源网确认（第二场）→ 再次进入战斗...')
                 post_click(hwnd, pos[0], pos[1])
@@ -511,24 +511,24 @@ def run_yuanwang_battle(bot, character_name: str = '', difficulty: str = '普通
                 exit_battle(bot, 30, 30)
 
             time.sleep(3)
-            pos = wait_for_image(bot, _stpl('集成读卡.png'), timeout=5)
+            pos = wait_for_image(bot, _stpl('集成读卡.png'))
             if pos is not None:
                 bot._log('检测到集成读卡，开始选牌...')
                 _select_card_by_ocr(bot)
 
                 bot._log('点击集成确认按钮...')
-                pos = wait_for_image(bot, _stpl('集成确认按钮.png'), timeout=5)
+                pos = wait_for_image(bot, _stpl('集成确认按钮.png'))
                 if pos is not None:
                     post_click(hwnd, pos[0], pos[1])
                     time.sleep(2)
                     exit_battle(bot, 30, 30)
 
                     # 检测货箱集成器 → 打开
-                    pos = wait_for_image(bot, _stpl('货箱集成器.png'), timeout=5)
+                    pos = wait_for_image(bot, _stpl('货箱集成器.png'))
                     if pos is not None:
                         bot._log('检测到货箱集成器，查找货箱集成打开...')
                         pos = wait_for_image(
-                            bot, _stpl('货箱集成打开.png'), timeout=5)
+                            bot, _stpl('货箱集成打开.png'))
                         if pos is not None:
                             bot._log('点击货箱集成打开...')
                             post_click(hwnd, pos[0], pos[1])

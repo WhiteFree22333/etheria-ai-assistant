@@ -135,14 +135,14 @@ def start_battle(bot) -> bool:
     bot._log('已进入战斗准备画面')
 
     bot._log('点击预设按钮...')
-    pos = wait_for_image(bot, '预设.png', timeout=5)
+    pos = wait_for_image(bot, '预设.png')
     if pos is None:
         bot._log('[FAIL] 失败：未找到预设按钮')
         return False
     _click(pos)
     time.sleep(0.5)
 
-    use_pos = wait_for_image(bot, '使用预设.png', timeout=5)
+    use_pos = wait_for_image(bot, '使用预设.png')
     if use_pos is None:
         bot._log('[FAIL] 未找到「使用预设」按钮')
         bot._log('[WARN] PRESET_MISSING: 亲，您没有设置预设阵容哦，请设置后回到主页重新开始。')
@@ -155,7 +155,7 @@ def start_battle(bot) -> bool:
     equipment_pos = wait_for_image(bot, '预设装备占用.png', timeout=3)
     if equipment_pos is not None:
         bot._log('检测到装备占用弹窗，点击确定...')
-        confirm_pos = wait_for_image(bot, '确定.png', timeout=5)
+        confirm_pos = wait_for_image(bot, '确定.png')
         if confirm_pos is None:
             bot._log('[FAIL] 失败：未找到确定按钮')
             return False
@@ -163,7 +163,7 @@ def start_battle(bot) -> bool:
         time.sleep(0.5)
 
     bot._log('点击 F战斗 开始战斗...')
-    pos = wait_for_image(bot, 'F战斗.png', timeout=5)
+    pos = wait_for_image(bot, 'F战斗.png')
     if pos is None:
         bot._log('[FAIL] 失败：未找到 F战斗 按钮')
         return False
@@ -171,7 +171,7 @@ def start_battle(bot) -> bool:
     time.sleep(0.8)
 
     bot._log('点击连续战斗返回...')
-    pos = wait_for_image(bot, '连续战斗返回.png', timeout=5)
+    pos = wait_for_image(bot, '连续战斗返回.png')
     if pos is not None:
         _click(pos)
         time.sleep(0.5)
@@ -207,7 +207,7 @@ def run_zhike_battle(bot, character_name: str, difficulty: str = '炼狱', strea
         # ---- 第 6 步：选难度 ----
         diff_template = f'智壳{difficulty}.png'
         bot._log(f'第6步：选择难度 → {difficulty}（{diff_template}）...')
-        pos = wait_for_image(bot, diff_template, timeout=5)
+        pos = wait_for_image(bot, diff_template)
         if pos is None:
             bot._log(f'[FAIL] 失败：未检测到难度按钮 {diff_template}')
             return False
@@ -216,13 +216,13 @@ def run_zhike_battle(bot, character_name: str, difficulty: str = '炼狱', strea
 
         # ---- 第 7 步：点击连续战斗R ----
         bot._log('第7步：点击连续战斗R...')
-        pos = wait_for_image(bot, '连续战斗R点击.png', timeout=5)
+        pos = wait_for_image(bot, '连续战斗R点击.png')
         if pos is None:
             bot._log('[FAIL] 失败：未检测到连续战斗R按钮')
             return False
         post_click(hwnd, pos[0], pos[1])
 
-        minus_pos = wait_for_image(bot, '减号图标.png', timeout=5)
+        minus_pos = wait_for_image(bot, '减号图标.png')
         if minus_pos is None:
             bot._log('[FAIL] 失败：R点击后未弹出次数设置窗口')
             return False
@@ -235,7 +235,7 @@ def run_zhike_battle(bot, character_name: str, difficulty: str = '炼狱', strea
             post_click(hwnd, minus_pos[0], minus_pos[1])
             time.sleep(0.06)
 
-        plus_pos = wait_for_image(bot, '加号图标.png', timeout=5)
+        plus_pos = wait_for_image(bot, '加号图标.png')
         if plus_pos is None:
             bot._log('[FAIL] 失败：未检测到加号图标')
             return False
@@ -247,7 +247,7 @@ def run_zhike_battle(bot, character_name: str, difficulty: str = '炼狱', strea
             time.sleep(0.06)
 
         # ---- 第 10 步：开始战斗 ----
-        pos = wait_for_image(bot, '开始战斗.png', timeout=5)
+        pos = wait_for_image(bot, '开始战斗.png')
         if pos is None:
             bot._log('[FAIL] 失败：未检测到开始战斗按钮')
             return False

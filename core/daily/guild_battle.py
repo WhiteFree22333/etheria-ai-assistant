@@ -64,18 +64,18 @@ def run_guild_arena(bot) -> bool:
         time.sleep(0.5)
         if not open_sidebar(bot):
             return False
-        pos = wait_for_image(bot, '竞技场图标.png', timeout=5)
+        pos = wait_for_image(bot, '竞技场图标.png')
         if pos is None:
             return False
         post_click(hwnd, pos[0], pos[1])
         time.sleep(0.8)
-        pos = wait_for_image(bot, '竞技场入口.png', timeout=5)
+        pos = wait_for_image(bot, '竞技场入口.png')
         if pos is None:
             return False
         post_click(hwnd, pos[0], pos[1])
         exit_battle(bot, 30, 30)
         exit_battle(bot, 30, 30)
-        pos = wait_for_image(bot, '竞技场挑战.png', timeout=5)
+        pos = wait_for_image(bot, '竞技场挑战.png')
         if pos is None:
             return False
         post_click(hwnd, pos[0], pos[1])
@@ -96,7 +96,7 @@ def run_guild_arena(bot) -> bool:
                 break
             battle_num += 1
             bot._log(f'=== 第 {battle_num} 场 ===')
-            pos = wait_for_image(bot, '挑战竞技场进入图标.png', timeout=5)
+            pos = wait_for_image(bot, '挑战竞技场进入图标.png')
             if pos is None:
                 if bot.find_image(tpl('灰色竞技场挑战.png')) is not None:
                     bot._log('票为 0（灰色挑战），竞技场结束')
@@ -154,12 +154,12 @@ def run_guild_anchor(bot) -> bool:
         bot._log('=' * 40)
         if not enter_guild_home(bot):
             return False
-        pos = wait_for_image(bot, '锚点勘测.png', timeout=5)
+        pos = wait_for_image(bot, '锚点勘测.png')
         if pos is None:
             return False
         post_click(hwnd, pos[0], pos[1])
         time.sleep(2)
-        pos = wait_for_image(bot, '锚点勘测前往战斗.png', timeout=5)
+        pos = wait_for_image(bot, '锚点勘测前往战斗.png')
         if pos is None:
             return False
         post_click(hwnd, pos[0], pos[1])
@@ -195,19 +195,19 @@ def run_guild_theater(bot) -> bool:
         if not open_sidebar(bot):
             return False
         bot._log('点击挑战...')
-        pos = wait_for_image(bot, '挑战.png', timeout=5)
+        pos = wait_for_image(bot, '挑战.png')
         if pos is None:
             return False
         post_click(hwnd, pos[0], pos[1])
         time.sleep(2)
         bot._log('点击试炼挑战...')
-        pos = wait_for_image(bot, '试炼挑战.png', timeout=5)
+        pos = wait_for_image(bot, '试炼挑战.png')
         if pos is None:
             return False
         post_click(hwnd, pos[0], pos[1])
         time.sleep(2)
         bot._log('点击幻音剧场入口...')
-        pos = wait_for_image(bot, '幻音剧场入口.png', timeout=5)
+        pos = wait_for_image(bot, '幻音剧场入口.png')
         if pos is None:
             return False
         post_click(hwnd, pos[0], pos[1])
@@ -217,30 +217,30 @@ def run_guild_theater(bot) -> bool:
         # 中途队友退出会回退到"创建房间"画面，需要重新走一遍
         while bot.is_running:
             bot._log('创建房间...')
-            pos = wait_for_image(bot, '幻音创建房间.png', timeout=5)
+            pos = wait_for_image(bot, '幻音创建房间.png')
             if pos is None:
                 return False
             post_click(hwnd, pos[0], pos[1])
             time.sleep(2)
 
             bot._log('联合...')
-            pos = wait_for_image(bot, '幻音联合.png', timeout=5)
+            pos = wait_for_image(bot, '幻音联合.png')
             if pos is None:
-                pos = wait_for_image(bot, '幻音联合2.png', timeout=5)
+                pos = wait_for_image(bot, '幻音联合2.png')
             if pos is None:
                 return False
             post_click(hwnd, pos[0], pos[1])
             time.sleep(2)
 
             bot._log('布阵...')
-            pos = wait_for_image(bot, '幻音布阵.png', timeout=5)
+            pos = wait_for_image(bot, '幻音布阵.png')
             if pos is None:
                 return False
             post_click(hwnd, pos[0], pos[1])
             time.sleep(2)
 
             bot._log('上阵区域...')
-            pos = wait_for_image(bot, '幻音上阵区域.png', timeout=5)
+            pos = wait_for_image(bot, '幻音上阵区域.png')
             if pos is None:
                 return False
             r = bot.find_image(tpl('幻音上阵区域.png'))
@@ -255,14 +255,14 @@ def run_guild_theater(bot) -> bool:
                 time.sleep(0.5)
 
             bot._log('确认...')
-            pos = wait_for_image(bot, '幻音确认.png', timeout=5)
+            pos = wait_for_image(bot, '幻音确认.png')
             if pos is None:
                 return False
             post_click(hwnd, pos[0], pos[1])
             time.sleep(2)
 
             bot._log('匹配...')
-            pos = wait_for_image(bot, '幻音剧场匹配.png', timeout=5)
+            pos = wait_for_image(bot, '幻音剧场匹配.png')
             if pos is None:
                 return False
             post_click(hwnd, pos[0], pos[1])
@@ -327,7 +327,7 @@ def run_guild_remind(bot) -> bool:
         if not enter_guild_home(bot):
             return False
         bot._log('点击公会成员图标...')
-        pos = wait_for_image(bot, '公会成员图标.png', timeout=5)
+        pos = wait_for_image(bot, '公会成员图标.png')
         if pos is None:
             return False
         post_click(hwnd, pos[0], pos[1])
@@ -474,7 +474,7 @@ def run_guild_claim_all(bot) -> bool:
         if not open_sidebar(bot):
             return False
         bot._log('点击任务...')
-        pos = wait_for_image(bot, '任务.png', timeout=5)
+        pos = wait_for_image(bot, '任务.png')
         if pos is None:
             return False
         post_click(hwnd, pos[0], pos[1])
@@ -529,7 +529,7 @@ def run_guild_anchor_claim(bot) -> bool:
         if not enter_guild_home(bot):
             return False
         bot._log('点击锚点勘测...')
-        pos = wait_for_image(bot, '锚点勘测.png', timeout=5)
+        pos = wait_for_image(bot, '锚点勘测.png')
         if pos is None:
             return False
         post_click(hwnd, pos[0], pos[1])
@@ -585,7 +585,7 @@ def run_test_stamina_check(bot) -> bool:
         bot.go_back_to_main(tpl('返回.png'))
         time.sleep(0.5)
         bot._log('点击体力图标...')
-        pos = wait_for_image(bot, '体力图标.png', timeout=5)
+        pos = wait_for_image(bot, '体力图标.png')
         if pos is None:
             return False
         post_click(hwnd, pos[0], pos[1])
@@ -655,14 +655,14 @@ def run_guild_assist(bot) -> bool:
         if not enter_guild_home(bot):
             return False
         bot._log('点击协会共助...')
-        pos = wait_for_image(bot, '协会共助.png', timeout=5)
+        pos = wait_for_image(bot, '协会共助.png')
         if pos is None:
             return False
         post_click(hwnd, pos[0], pos[1])
         time.sleep(2)
 
         bot._log('点击协会共助一键...')
-        pos = wait_for_image(bot, '协会共助一键.png', timeout=5)
+        pos = wait_for_image(bot, '协会共助一键.png')
         if pos is None:
             return False
         post_click(hwnd, pos[0], pos[1])
@@ -694,7 +694,7 @@ def run_guild_assist(bot) -> bool:
     # ]:
     #     if not bot.is_running: break
     #     bot._log(f'=== {icon_label}系助力 ===')
-    #     pos = wait_for_image(bot, icon_png, timeout=5)
+    #     pos = wait_for_image(bot, icon_png)
     #     if pos is None: bot._log(f'[WARN] 未检测到{icon_label}图标，跳过'); continue
     #     post_click(hwnd, pos[0], pos[1]); time.sleep(2)
     #     round_num = 0
@@ -749,7 +749,7 @@ def run_guild_weekly(bot) -> bool:
         if not enter_guild_home(bot):
             return False
         bot._log('点击公会每周任务图标...')
-        pos = wait_for_image(bot, '公会每周任务图标.png', timeout=5)
+        pos = wait_for_image(bot, '公会每周任务图标.png')
         if pos is None:
             return False
         post_click(hwnd, pos[0], pos[1])
@@ -807,17 +807,17 @@ def run_guild_arena_claim(bot) -> bool:
         time.sleep(0.5)
         if not open_sidebar(bot):
             return False
-        pos = wait_for_image(bot, '竞技场图标.png', timeout=5)
+        pos = wait_for_image(bot, '竞技场图标.png')
         if pos is None:
             return False
         post_click(hwnd, pos[0], pos[1])
         time.sleep(0.8)
-        pos = wait_for_image(bot, '竞技场入口.png', timeout=5)
+        pos = wait_for_image(bot, '竞技场入口.png')
         if pos is None:
             return False
         post_click(hwnd, pos[0], pos[1])
         time.sleep(0.8)
-        pos = wait_for_image(bot, '竞技场奖励图标.png', timeout=5)
+        pos = wait_for_image(bot, '竞技场奖励图标.png')
         if pos is None:
             return False
         post_click(hwnd, pos[0], pos[1])
@@ -834,7 +834,7 @@ def run_guild_arena_claim(bot) -> bool:
             bot._log(f'领取 #{num} ({ax}, {ay})...')
             post_click(hwnd, ax, ay)
             exit_battle(bot, 30, 30)
-        pos = wait_for_image(bot, '咔嚓.png', timeout=5)
+        pos = wait_for_image(bot, '咔嚓.png')
         if pos is not None:
             post_click(hwnd, pos[0], pos[1])
             time.sleep(0.5)

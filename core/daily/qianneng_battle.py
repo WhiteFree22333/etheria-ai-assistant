@@ -46,17 +46,17 @@ def run_qianneng_battle(bot, character_name: str = '', difficulty: str = '', str
 
         # ---- 第 2 步：选难度 ----
         bot._log(f'第2步：选择难度（{diff_tpl}）...')
-        pos = wait_for_image(bot, diff_tpl, timeout=5)
+        pos = wait_for_image(bot, diff_tpl)
         if pos is None: return False
         post_click(hwnd, pos[0], pos[1]); time.sleep(0.6)
 
         # ---- 第 3 步：R + 双倍 + 减号 + 加号 + 开始 + 体力 + 入场 ----
         bot._log('点击连续战斗R...')
-        pos = wait_for_image(bot, '连续战斗R点击.png', timeout=5)
+        pos = wait_for_image(bot, '连续战斗R点击.png')
         if pos is None: return False
         post_click(hwnd, pos[0], pos[1])
 
-        minus_pos = wait_for_image(bot, '减号图标.png', timeout=5)
+        minus_pos = wait_for_image(bot, '减号图标.png')
         if minus_pos is None: return False
 
         double_checked = bot.find_image(tpl('双倍消耗已勾选.png'))
@@ -76,14 +76,14 @@ def run_qianneng_battle(bot, character_name: str = '', difficulty: str = '', str
             if not bot.is_running: return False
             post_click(hwnd, minus_pos[0], minus_pos[1]); time.sleep(0.06)
 
-        plus_pos = wait_for_image(bot, '加号图标.png', timeout=5)
+        plus_pos = wait_for_image(bot, '加号图标.png')
         if plus_pos is None: return False
         bot._log(f'加号 ×{streak-1}...')
         for _ in range(streak - 1):
             if not bot.is_running: return False
             post_click(hwnd, plus_pos[0], plus_pos[1]); time.sleep(0.06)
 
-        pos = wait_for_image(bot, '开始战斗.png', timeout=5)
+        pos = wait_for_image(bot, '开始战斗.png')
         if pos is None: return False
         post_click(hwnd, pos[0], pos[1])
 

@@ -57,7 +57,7 @@ def run_yuanqi_battle(bot, character_name: str, difficulty: str = '地狱四', s
             is_last = (idx == target_idx)
             need_double = is_last and idx != 0  # 重构兵祸只点一次，其他角色最后点两次
 
-            pos = wait_for_image(bot, f'{ch}.png', timeout=5)
+            pos = wait_for_image(bot, f'{ch}.png')
             if pos is None:
                 bot._log(f'[FAIL] 失败：未检测到 {ch}.png')
                 return False
@@ -66,7 +66,7 @@ def run_yuanqi_battle(bot, character_name: str, difficulty: str = '地狱四', s
 
             if need_double:
                 bot._log(f'再点 {ch}（选中）...')
-                pos = wait_for_image(bot, f'{ch}.png', timeout=5)
+                pos = wait_for_image(bot, f'{ch}.png')
                 if pos is None:
                     bot._log(f'[FAIL] 失败：选中时未检测到 {ch}.png')
                     return False
@@ -85,7 +85,7 @@ def run_yuanqi_battle(bot, character_name: str, difficulty: str = '地狱四', s
                            bot.game_window.top + selected_pos.y)
             else:
                 bot._log('第7步：选择炼狱（智壳炼狱.png）...')
-                pos = wait_for_image(bot, '智壳炼狱.png', timeout=5)
+                pos = wait_for_image(bot, '智壳炼狱.png')
                 if pos is None:
                     bot._log('[FAIL] 失败：未检测到智壳炼狱.png')
                     return False
@@ -99,7 +99,7 @@ def run_yuanqi_battle(bot, character_name: str, difficulty: str = '地狱四', s
                            bot.game_window.top + selected_pos.y)
             else:
                 bot._log('第7步：选择地狱四（源器地狱四.png）...')
-                pos = wait_for_image(bot, '源器地狱四.png', timeout=5)
+                pos = wait_for_image(bot, '源器地狱四.png')
                 if pos is None:
                     bot._log('[FAIL] 失败：未检测到源器地狱四.png')
                     return False
@@ -108,7 +108,7 @@ def run_yuanqi_battle(bot, character_name: str, difficulty: str = '地狱四', s
 
         # ---- 第 8 步：点击连续战斗R → 等弹框 → 处理双倍消耗 ----
         bot._log('第8步：点击连续战斗R...')
-        pos = wait_for_image(bot, '连续战斗R点击.png', timeout=5)
+        pos = wait_for_image(bot, '连续战斗R点击.png')
         if pos is None:
             bot._log('[FAIL] 失败：未检测到连续战斗R按钮')
             return False
@@ -145,7 +145,7 @@ def run_yuanqi_battle(bot, character_name: str, difficulty: str = '地狱四', s
                 f'双倍消耗：当前状态符合预期（要={double_stamina}，现={currently_checked}），跳过')
 
         # 等弹框稳定
-        minus_pos = wait_for_image(bot, '减号图标.png', timeout=5)
+        minus_pos = wait_for_image(bot, '减号图标.png')
         if minus_pos is None:
             bot._log('[FAIL] 失败：未弹出次数设置窗口')
             return False
@@ -158,7 +158,7 @@ def run_yuanqi_battle(bot, character_name: str, difficulty: str = '地狱四', s
             post_click(hwnd, minus_pos[0], minus_pos[1])
             time.sleep(0.06)
 
-        plus_pos = wait_for_image(bot, '加号图标.png', timeout=5)
+        plus_pos = wait_for_image(bot, '加号图标.png')
         if plus_pos is None:
             bot._log('[FAIL] 失败：未检测到加号图标')
             return False
@@ -170,7 +170,7 @@ def run_yuanqi_battle(bot, character_name: str, difficulty: str = '地狱四', s
             time.sleep(0.06)
 
         # ---- 第 10 步：开始战斗 + 体力检查 + 战斗入场 ----
-        pos = wait_for_image(bot, '开始战斗.png', timeout=5)
+        pos = wait_for_image(bot, '开始战斗.png')
         if pos is None:
             bot._log('[FAIL] 失败：未检测到开始战斗按钮')
             return False
