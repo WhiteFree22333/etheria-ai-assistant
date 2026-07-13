@@ -226,6 +226,8 @@ def run_guild_theater(bot) -> bool:
             bot._log('联合...')
             pos = wait_for_image(bot, '幻音联合.png', timeout=5)
             if pos is None:
+                pos = wait_for_image(bot, '幻音联合2.png', timeout=5)
+            if pos is None:
                 return False
             post_click(hwnd, pos[0], pos[1])
             time.sleep(2)

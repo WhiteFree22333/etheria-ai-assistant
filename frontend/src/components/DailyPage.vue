@@ -64,7 +64,7 @@ async function resizeGame() {
     <YuanqiPanel v-show="subTab === 'yuanqi'" />
     <GuildPanel v-show="subTab === 'guild'" />
     <QiannengPanel v-show="subTab === 'qianneng'" />
-    <TemplateCapture v-if="false" />
+    <TemplateCapture v-if="true" />
   </section>
 </template>
 
