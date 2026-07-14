@@ -13,7 +13,8 @@ from core._base.input import post_click
 from core._base.window import focus_window, get_client_rect
 from core.config import GAME_CONFIG
 
-_BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_BASE_DIR = os.path.dirname(os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__))))
 _TEMPLATES_DIR = os.path.join(_BASE_DIR, 'templates', 'richang')
 
 
@@ -32,7 +33,8 @@ def wait_for_image(bot, template_name: str, timeout: float = None, interval: flo
     超时后用 MSS 前台截图做最后一次兜底匹配——绕过 DXGI 缓存/脏帧问题。
     """
     # 如果已经是完整路径就不拼 richang/ 前缀
-    template_path = template_name if os.path.isabs(template_name) or '/' in template_name or '\\' in template_name else tpl(template_name)
+    template_path = template_name if os.path.isabs(
+        template_name) or '/' in template_name or '\\' in template_name else tpl(template_name)
     timeout = timeout or GAME_CONFIG.image_wait_timeout
     interval = interval or GAME_CONFIG.image_wait_interval
     deadline = time.time() + timeout
@@ -72,15 +74,18 @@ def wait_for_image(bot, template_name: str, timeout: float = None, interval: flo
         template = cv2.imdecode(_data, cv2.IMREAD_COLOR)
         if template is not None:
             screen_cv = cv2.cvtColor(np.array(fresh), cv2.COLOR_RGB2BGR)
-            result = cv2.matchTemplate(screen_cv, template, cv2.TM_CCOEFF_NORMED)
+            result = cv2.matchTemplate(
+                screen_cv, template, cv2.TM_CCOEFF_NORMED)
             _, max_val, _, max_loc = cv2.minMaxLoc(result)
             if max_val >= GAME_CONFIG.template_threshold:
                 th, tw = template.shape[:2]
                 cx, cy = max_loc[0] + tw // 2, max_loc[1] + th // 2
                 abs_x, abs_y = gw.left + cx, gw.top + cy
-                bot._log(f"MSS 兜底检测到: {template_name} ({abs_x}, {abs_y}) 置信度 {max_val:.2%}")
+                bot._log(
+                    f"MSS 兜底检测到: {template_name} ({abs_x}, {abs_y}) 置信度 {max_val:.2%}")
                 return (abs_x, abs_y)
-            bot._log(f"MSS 兜底未通过阈值: {template_name} (置信度 {max_val:.2%} < {GAME_CONFIG.template_threshold})")
+            bot._log(
+                f"MSS 兜底未通过阈值: {template_name} (置信度 {max_val:.2%} < {GAME_CONFIG.template_threshold})")
     bot._log(f"最终失败: {template_name}")
     return None
 
@@ -92,7 +97,8 @@ def wait_for_image_gone(bot, template_name: str, timeout: float = None, confirm_
     防止 Unity 偶尔不吃 PostMessage 点击导致永远等不到消失。
     """
     # 如果已经是完整路径就不拼 richang/ 前缀
-    template_path = template_name if os.path.isabs(template_name) or '/' in template_name or '\\' in template_name else tpl(template_name)
+    template_path = template_name if os.path.isabs(
+        template_name) or '/' in template_name or '\\' in template_name else tpl(template_name)
     timeout = timeout or GAME_CONFIG.image_gone_timeout
     interval = interval or GAME_CONFIG.image_gone_interval
     deadline = time.time() + timeout
@@ -204,7 +210,7 @@ def enter_dungeon(bot, entry_template: str) -> bool:
 # 打开侧边栏（通用入口）
 # ============================================================
 
-def _click_and_wait_gone(bot, hwnd, x, y, template_name):
+def _click_and_wait_gone(bot, hwnd, x, y, template_name, timeout=None):
     """点击 + 等图标消失。post_click 自身已双发，这里只需等结果。"""
     post_click(hwnd, x, y)
     time.sleep(0.3)
@@ -257,7 +263,8 @@ def setup_preset(bot) -> bool:
     hwnd = bot.game_window.hwnd
 
     bot._log('点击预设按钮...')
-    pos = wait_for_image(bot, '预设.png', timeout=GAME_CONFIG.preset_load_timeout)
+    pos = wait_for_image(
+        bot, '预设.png', timeout=GAME_CONFIG.preset_load_timeout)
     if pos is None:
         bot._log('[FAIL] 失败：未找到预设按钮')
         return False
@@ -269,20 +276,45 @@ def setup_preset(bot) -> bool:
         post_click(hwnd, pos[0], pos[1])
         time.sleep(0.5)
 
-    use_pos = wait_for_image(bot, '使用预设.png', timeout=GAME_CONFIG.preset_load_timeout)
+    # 可能识别到多个「使用预设」——选最靠上、靠右的那个，只点第一个
+    import cv2 as _cv2
+    import numpy as _np
+    from core._base.template_match import _imread as _read_tpl
+    tpl_use = _read_tpl(tpl('使用预设.png'))
+    use_pos = None
+    if tpl_use is not None:
+        img = bot.capture()
+        if img is not None:
+            scr = _cv2.cvtColor(_np.array(img), _cv2.COLOR_RGB2BGR)
+            result = _cv2.matchTemplate(scr, tpl_use, _cv2.TM_CCOEFF_NORMED)
+            loc = _np.where(result >= GAME_CONFIG.template_threshold)
+            points = list(zip(*loc[::-1]))
+            if points:
+                # 去重：相邻 < 20px 视为同一个
+                dedup = []
+                for pt in sorted(points, key=lambda p: p[0]):
+                    if not any(abs(pt[0]-p[0]) < 20 and abs(pt[1]-p[1]) < 20 for p in dedup):
+                        dedup.append(pt)
+                # 选 Y 最小的（最上方），同 Y 行中选 X 最小的
+                th_use, tw_use = tpl_use.shape[:2]
+                best = min(dedup, key=lambda p: (p[1], p[0]))
+                use_pos = (bot.game_window.left + best[0] + tw_use // 2,
+                           bot.game_window.top + best[1] + th_use // 2)
+
     if use_pos is None:
         bot._log('[FAIL] 未找到「使用预设」按钮')
         bot._log('[WARN] PRESET_MISSING: 亲，您没有设置预设阵容哦，请设置后回到主页重新开始。')
         return False
 
-    bot._log('点击使用预设...')
+    bot._log(f'点击使用预设... 共识别{len(dedup) if dedup else 0}个, 选用Y最小({best[1]})')
     post_click(hwnd, use_pos[0], use_pos[1])
     time.sleep(0.5)
 
     equipment_pos = wait_for_image(bot, '预设装备占用.png', timeout=3)
     if equipment_pos is not None:
         bot._log('检测到装备占用弹窗，点击确定...')
-        confirm_pos = wait_for_image(bot, '确定.png', timeout=GAME_CONFIG.preset_load_timeout)
+        confirm_pos = wait_for_image(
+            bot, '确定.png', timeout=GAME_CONFIG.preset_load_timeout)
         if confirm_pos is None:
             bot._log('[FAIL] 失败：未找到确定按钮')
             return False
@@ -320,6 +352,7 @@ def enter_guild_home(bot) -> bool:
 # ============================================================
 
 _ocr_manual = None
+
 
 def _find_manual_button(bot, attempt=0):
     time.sleep(1.5)
@@ -366,7 +399,8 @@ def _find_manual_button(bot, attempt=0):
         enhanced = clahe.apply(gray)
 
         # 方案B：原图 + 放大（EasyOCR 对小文字需要放大）
-        scaled = cv2.resize(np.array(roi), None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
+        scaled = cv2.resize(np.array(roi), None, fx=2, fy=2,
+                            interpolation=cv2.INTER_CUBIC)
 
         all_dets = []
 
@@ -396,7 +430,8 @@ def _find_manual_button(bot, attempt=0):
                         sx, sy = 1.0, 1.0
                     cx = rx + int(sum(p[0] * sx for p in box) / 4)
                     cy = int(sum(p[1] * sy for p in box) / 4)
-                    bot._log(f'[尝试{attempt}] OCR({label}) 找到 "{txt}": ({cx}, {cy}) {conf:.0%}')
+                    bot._log(
+                        f'[尝试{attempt}] OCR({label}) 找到 "{txt}": ({cx}, {cy}) {conf:.0%}')
                     return (gw.left + cx, gw.top + cy)
 
         # 兜底：把所有识别结果按 x 坐标排序拼起来，搜索 "手动"
@@ -455,7 +490,8 @@ def enter_and_wait_battle(bot, battle_end_template='Buff.png', timeout=None):
     time.sleep(5)
     bot._log(f'等待战斗结束（{battle_end_template} 消失）...')
     timeout = timeout or GAME_CONFIG.battle_end_timeout
-    wait_for_image_gone(bot, battle_end_template, timeout=timeout, confirm_times=2, interval=1)
+    wait_for_image_gone(bot, battle_end_template,
+                        timeout=timeout, confirm_times=2, interval=1)
     return True
 
 
@@ -463,21 +499,26 @@ def enter_and_wait_battle(bot, battle_end_template='Buff.png', timeout=None):
 # 左下角退出（通用）
 # ============================================================
 
-def exit_battle(bot, offset_x=None, offset_y=None, exit_wait=GAME_CONFIG.exit_battle_wait):
-    """双击游戏窗口左下角退出（防段位升级弹窗），等 exit_wait 秒让页面切完。"""
+def exit_battle(bot, offset_x=None, offset_y=None, exit_wait=GAME_CONFIG.exit_battle_wait, single_click=False):
+    """点击游戏窗口左下角退出，等 exit_wait 秒让页面切完。
+
+    Args:
+        single_click: True=只点1次，False=双击（防段位升级弹窗，默认）
+    """
     offset_x = offset_x if offset_x is not None else GAME_CONFIG.exit_offset_x
     offset_y = offset_y if offset_y is not None else GAME_CONFIG.exit_offset_y
     time.sleep(exit_wait)
     hwnd = bot.game_window.hwnd
-    # 用客户区坐标算退出点 — GetWindowRect 包含标题栏/边框，ScreenToClient 可能溢出
     cl = get_client_rect(hwnd)
     client_left, client_top, client_right, client_bottom = cl
     exit_x = client_left + offset_x
     exit_y = client_bottom - offset_y
-    bot._log(f'点击左下角退出 ({exit_x}, {exit_y}) 客户区({client_left},{client_top})-({client_right},{client_bottom})')
+    bot._log(
+        f'点击左下角退出 ({exit_x}, {exit_y}){" 单次" if single_click else ""} 客户区({client_left},{client_top})-({client_right},{client_bottom})')
     post_click(hwnd, exit_x, exit_y)
-    time.sleep(0.5)
-    post_click(hwnd, exit_x, exit_y)
+    if not single_click:
+        time.sleep(0.5)
+        post_click(hwnd, exit_x, exit_y)
     time.sleep(exit_wait)
 
 
@@ -495,20 +536,25 @@ def find_all_by_color(bot, target_rgb=None, tolerance=None):
         return []
     arr = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
     r, g, b = target_rgb
-    lower = np.clip(np.array([b - tolerance, g - tolerance, r - tolerance], dtype=np.int16), 0, 255).astype(np.uint8)
-    upper = np.clip(np.array([b + tolerance, g + tolerance, r + tolerance], dtype=np.int16), 0, 255).astype(np.uint8)
+    lower = np.clip(np.array([b - tolerance, g - tolerance,
+                    r - tolerance], dtype=np.int16), 0, 255).astype(np.uint8)
+    upper = np.clip(np.array([b + tolerance, g + tolerance,
+                    r + tolerance], dtype=np.int16), 0, 255).astype(np.uint8)
     mask = cv2.inRange(arr, lower, upper)
-    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(
+        mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     points = []
     for cnt in contours:
-        if cv2.contourArea(cnt) < 3: continue
+        if cv2.contourArea(cnt) < 3:
+            continue
         x, y, w, h = cv2.boundingRect(cnt)
         points.append((x + w // 2, y + h // 2))
     deduped = []
     for p in points:
         if not any(abs(p[0]-dp[0]) < 10 and abs(p[1]-dp[1]) < 10 for dp in deduped):
             deduped.append(p)
-    result = [(bot.game_window.left + p[0], bot.game_window.top + p[1]) for p in deduped]
+    result = [(bot.game_window.left + p[0], bot.game_window.top + p[1])
+              for p in deduped]
     result.sort(key=lambda p: p[1])
     gw = bot.game_window
     bot._log(f'窗口: left={gw.left} top={gw.top} {gw.width}x{gw.height}')
@@ -524,7 +570,8 @@ def find_all_by_color(bot, target_rgb=None, tolerance=None):
 
 def handle_cleanup_popup(bot):
     """轮询检测前往清理弹窗（最多3秒），出现即处理。"""
-    import cv2, numpy as np
+    import cv2
+    import numpy as np
     from core._base.template_match import _imread
     tpl_img = _imread(tpl('前往清理.png'))
     if tpl_img is None:
@@ -533,9 +580,11 @@ def handle_cleanup_popup(bot):
     for _ in range(12):  # 每 0.25s 扫一次，最多 3s
         time.sleep(0.25)
         img = bot.capture()
-        if img is None: continue
+        if img is None:
+            continue
         scr = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
-        _, max_val, _, _ = cv2.minMaxLoc(cv2.matchTemplate(scr, tpl_img, cv2.TM_CCOEFF_NORMED))
+        _, max_val, _, _ = cv2.minMaxLoc(
+            cv2.matchTemplate(scr, tpl_img, cv2.TM_CCOEFF_NORMED))
         if max_val >= GAME_CONFIG.template_threshold:
             bot._log('检测到前往清理弹窗')
             ok = wait_for_image(bot, '知道了.png')

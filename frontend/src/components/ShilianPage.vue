@@ -1,70 +1,115 @@
 <script setup lang="ts">
-import { inject, onMounted, ref } from "vue"
-import type { Character } from "../types"
-import CharacterList from "./CharacterList.vue"
-import TemplateCapture from "./TemplateCapture.vue"
+import { inject, onMounted, ref } from "vue";
+import type { Character } from "../types";
+import CharacterList from "./CharacterList.vue";
+import TemplateCapture from "./TemplateCapture.vue";
 
-const charListRef = ref<any>(null)
-const addLog = inject<(msg: string) => void>("addLog", () => {})
-const registerTask = inject<(order: number, name: string, fn: () => Promise<boolean>) => void>('registerTask', () => {})
+const yuanwangRef = ref<any>(null);
+const xujinRef = ref<any>(null);
+const addLog = inject<(msg: string) => void>("addLog", () => {});
+const registerTask = inject<
+  (order: number, name: string, fn: () => Promise<boolean>) => void
+>("registerTask", () => {});
 
-const subTab = ref("yuanwang")
+const subTab = ref("yuanwang");
 const subTabs = [
   { id: "yuanwang", label: "源网征令" },
   { id: "xujin", label: "虚烬探索" },
-]
+];
 
 // 源网征令角色配置
 const yuanwangCharacters: Character[] = [
-  { id: "yuanwang", name: "源网征令", difficulty: "普通", streak: 1, totalCount: 1 },
-]
+  {
+    id: "yuanwang",
+    name: "源网征令",
+    difficulty: "普通",
+    streak: 1,
+    totalCount: 1,
+  },
+];
+// 虚烬探索角色配置
+const xujinCharacters: Character[] = [
+  {
+    id: "xujin",
+    name: "虚烬探索",
+    difficulty: "普通",
+    streak: 1,
+    totalCount: 1,
+  },
+];
 
 onMounted(() => {
-  registerTask(21, '源网征令', async () => {
-    const list = charListRef.value
-    const ch = yuanwangCharacters.find(c => c.id === list?.selected)
-    if (!ch) return true
-    const api = window.pywebview?.api as any
-    if (!api) return false
+  registerTask(21, "源网征令", async () => {
+    const list = yuanwangRef.value;
+    const ch = yuanwangCharacters.find((c) => c.id === list?.selected);
+    if (!ch) return true;
+    const api = window.pywebview?.api as any;
+    if (!api) return false;
     for (let i = 0; i < ch.totalCount; i++) {
-      const ok = await api.run_yuanwang_battle(ch.name, ch.difficulty, ch.streak)
-      if (!ok) return false
+      const ok = await api.run_yuanwang_battle(
+        ch.name,
+        ch.difficulty,
+        ch.streak
+      );
+      if (!ok) return false;
     }
-    return true
-  })
-})
+    return true;
+  });
+  registerTask(23, "虚烬探索", async () => {
+    const list = xujinRef.value;
+    const ch = xujinCharacters.find((c) => c.id === list?.selected);
+    if (!ch) return true;
+    const api = window.pywebview?.api as any;
+    if (!api) return false;
+    for (let i = 0; i < ch.totalCount; i++) {
+      const ok = await api.run_xujin_battle(ch.name, ch.difficulty, ch.streak);
+      if (!ok) return false;
+    }
+    return true;
+  });
+});
 
 // 截图保存功能 — 保存到 templates/shilian/ 子目录
-const tplName = ref('')
-const tplCount = ref(0)
-function getApi() { return window.pywebview?.api }
+const tplName = ref("");
+const tplCount = ref(0);
+function getApi() {
+  return window.pywebview?.api;
+}
 
 async function captureTemplate() {
-  const api = getApi()
-  if (!tplName.value || !api) return
-  addLog('正在截取游戏画面...')
+  const api = getApi();
+  if (!tplName.value || !api) return;
+  addLog("正在截取游戏画面...");
   try {
-    const result = await api.select_and_save_template(tplName.value, 'shilian')
+    const result = await api.select_and_save_template(tplName.value, "shilian");
     if (result.success) {
-      addLog(`模板已保存: shilian/${result.filename} (${result.region[2]}x${result.region[3]})`)
-      const tpls = await api.list_templates('shilian')
-      tplCount.value = (tpls || []).length
-      tplName.value = ''
+      addLog(
+        `模板已保存: shilian/${result.filename} (${result.region[2]}x${result.region[3]})`
+      );
+      const tpls = await api.list_templates("shilian");
+      tplCount.value = (tpls || []).length;
+      tplName.value = "";
     } else {
-      addLog(result.message || '选取失败')
+      addLog(result.message || "选取失败");
     }
-  } catch (e: any) { addLog(`选取失败: ${e}`) }
+  } catch (e: any) {
+    addLog(`选取失败: ${e}`);
+  }
 }
 
 // 调试：四路背景截图测试
 async function testBgCapture() {
-  const api = getApi()
-  if (!api) return
-  addLog('🔍 后台截图测试中… 请保持/遮挡游戏窗口后点击，对比 debug_screenshots/ 下的 4 张图')
+  const api = getApi();
+  if (!api) return;
+  addLog(
+    "🔍 后台截图测试中… 请保持/遮挡游戏窗口后点击，对比 debug_screenshots/ 下的 4 张图"
+  );
   try {
-    await api.test_background_capture()
-    addLog('✅ 测试截图完成 查看 debug_screenshots/bg_test_*.png')
-  } catch (e: any) { addLog(`失败: ${e}`) }
+    await api.test_background_capture();
+    addLog("✅ 测试截图完成 查看 debug_screenshots/bg_test_*.png");
+  } catch (e: any) {
+    addLog(`失败: ${e}`);
+  }
 }
 </script>
 
@@ -86,7 +131,8 @@ async function testBgCapture() {
 
     <!-- 源网征令 — 每次只执行一次，无需次数选择 -->
     <div v-show="subTab === 'yuanwang'" class="sub-content">
-      <CharacterList ref="charListRef"
+      <CharacterList
+        ref="yuanwangRef"
         title="yuanwang"
         :characters="yuanwangCharacters"
         :show-difficulty="false"
@@ -98,28 +144,40 @@ async function testBgCapture() {
       />
     </div>
 
-    <!-- 虚烬探索（占位） -->
-    <div v-show="subTab === 'xujin'" class="placeholder">
-      <span class="icon">🚧</span>
-      <p>虚烬探索</p>
-      <p class="sub">功能正在开发中...</p>
+    <!-- 虚烬探索 -->
+    <div v-show="subTab === 'xujin'" class="sub-content">
+      <CharacterList
+        ref="xujinRef"
+        title="xujin"
+        :characters="xujinCharacters"
+        :show-difficulty="false"
+        :show-streak="false"
+        :show-total-count="false"
+        :show-stamina="false"
+        :stamina-per-battle="30"
+        :max-count="5"
+      />
     </div>
 
     <!-- 截图保存模板（隐藏，需要时改 v-if="true"） -->
-    <div v-if="false">
-    <hr class="divider" />
-    <div class="inline-form">
-      <span class="hint-dir">→ templates/shilian/</span>
-      <input
-        type="text"
-        v-model="tplName"
-        placeholder="模板名称（如：源网征令图标）"
-        class="input-name"
-      />
-      <button class="btn-sm" @click="captureTemplate" :disabled="!tplName">🎯 截取图标</button>
-      <span class="tpl-count" v-if="tplCount">已存 {{ tplCount }} 个</span>
-      <button class="btn-sm btn-test" @click="testBgCapture">🔍 后台截图测试</button>
-    </div>
+    <div v-if="true">
+      <hr class="divider" />
+      <div class="inline-form">
+        <span class="hint-dir">→ templates/shilian/</span>
+        <input
+          type="text"
+          v-model="tplName"
+          placeholder="模板名称（如：源网征令图标）"
+          class="input-name"
+        />
+        <button class="btn-sm" @click="captureTemplate" :disabled="!tplName">
+          🎯 截取图标
+        </button>
+        <span class="tpl-count" v-if="tplCount">已存 {{ tplCount }} 个</span>
+        <button class="btn-sm btn-test" @click="testBgCapture">
+          🔍 后台截图测试
+        </button>
+      </div>
     </div>
   </section>
 </template>

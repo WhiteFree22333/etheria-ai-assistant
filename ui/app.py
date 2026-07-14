@@ -114,10 +114,31 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, BASE_DIR)
 
 from core._common.bot import GameBot
-from core.config import get_dungeon_list, load_env
+from core.config import get_dungeon_list, load_env, GAME_CONFIG
 from core._base.capture import save_template, capture_mss
 from core._base.selector import select_region_from_fullscreen
 from core._base.window import GameWindow
+
+# 日志队列 — 后台线程刷新到前端，避免长 API 调用阻塞 evaluate_js 渲染
+import queue
+_log_queue = queue.Queue()
+_log_window_ref = [None]  # 列表包装，线程安全地引用 window 对象
+
+def _log_flusher(window_ref):
+    """后台线程：从日志队列取消息，推送到 pywebview 前端。"""
+    while True:
+        msg = _log_queue.get()
+        if msg is None:
+            break  # 停止信号
+        try:
+            window = window_ref[0] if window_ref[0] else None
+            if window is not None:
+                window.evaluate_js(
+                    f'if(window.__vueApp){{window.__vueApp.addLog({json.dumps(msg)});}}'
+                    f'else{{console.log("_push_log:",{json.dumps(msg)});}}'
+                )
+        except Exception:
+            pass
 
 
 class Api:
@@ -133,35 +154,85 @@ class Api:
 
     def set_window(self, window):
         self._window = window
+        # 把窗口引用注入 _log_flusher 后台线程
+        if _log_window_ref[0] is None:
+            _log_window_ref[0] = window
+            threading.Thread(target=_log_flusher, args=(_log_window_ref,), daemon=True).start()
+
 
     def _push_log(self, message: str):
-        """推送日志到 JS 前端 + 打印到控制台"""
+        """推送日志到 JS 前端（通过后台队列避免阻塞）+ 打印到控制台"""
         try:
             print(f"[Api] {message}")
         except UnicodeEncodeError:
             print(f"[Api] {message.encode('gbk', errors='replace').decode('gbk')}")
 
-        if self._window:
-            try:
-                escaped = json.dumps(message)
+        # 推入队列，后台线程异步刷新到前端（不阻塞 API 线程）
+        _log_queue.put(message)
+
+        # 错误标记直接弹 alert（需要立即响应，不排队）
+        if 'PRESET_MISSING' in message:
+            if self._window:
                 self._window.evaluate_js(
-                    f'if(window.__vueApp){{window.__vueApp.addLog({escaped});}}'
-                    f'else{{console.log("_push_log:",{escaped});}}'
+                    'alert("亲，您没有设置预设阵容哦，请设置后回到主页重新开始。")'
+                )
+        elif 'STAMINA_MISSING' in message:
+            if self._window:
+                self._window.evaluate_js(
+                    'alert("亲，您的体力不足请先使用体力后再开始哦！")'
                 )
 
-                # 错误标记直接弹 alert（不依赖前端解析）
-                if 'PRESET_MISSING' in message:
-                    self._window.evaluate_js(
-                        'alert("亲，您没有设置预设阵容哦，请设置后回到主页重新开始。")'
-                    )
-                elif 'STAMINA_MISSING' in message:
-                    self._window.evaluate_js(
-                        'alert("亲，您的体力不足请先使用体力后再开始哦！")'
-                    )
-            except Exception:
-                pass
-
     # ==================== 生命周期 ====================
+
+    def check_update(self) -> dict:
+        """检查 GitHub Releases 是否有新版本。返回 {has_update, version, url}"""
+        from core import __version__
+        try:
+            import urllib.request, json
+            req = urllib.request.Request(
+                'https://api.github.com/repos/WhiteFree22333/etheria-ai-assistant/releases/latest',
+                headers={'User-Agent': 'remary-assistant'}
+            )
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                data = json.loads(resp.read().decode())
+                latest = data.get('tag_name', 'v0.0.0').lstrip('v')
+                current = __version__
+                has_update = _version_newer(latest, current)
+                return {
+                    'has_update': has_update,
+                    'current': f'v{current}',
+                    'latest': data.get('tag_name', ''),
+                    'url': data.get('html_url', ''),
+                }
+        except Exception as e:
+            return {'has_update': False, 'error': str(e)}
+
+    def set_server(self, server_key: str) -> dict:
+        """
+        设置区服，更新游戏窗口搜索关键词。
+        server_key: 'cn'(国服) / 'global'(国际服) / 'asia'(东亚服)
+        """
+        servers = {
+            'cn':    {'label': '国服',   'keyword': '伊瑟'},
+            'global': {'label': '国际服', 'keyword': 'Etheria'},
+            'asia':  {'label': '东亚服', 'keyword': '伊瑟'},
+        }
+        if server_key not in servers:
+            return {"success": False, "message": f"未知区服: {server_key}"}
+        info = servers[server_key]
+        GAME_CONFIG.window_title_keyword = info['keyword']
+        # 初始化 bot 并尝试找到游戏窗口
+        if self.bot is None:
+            self.bot = GameBot()
+            self.bot.on_log(self._push_log)
+        self.bot.window_keyword = info['keyword']
+        ok = self.bot.init()
+        if ok:
+            self._push_log(f"已切换区服: {info['label']} ({info['keyword']}) — 找到游戏窗口")
+            return {"success": True, "message": f"已选择 {info['label']}"}
+        else:
+            self._push_log(f"已切换区服: {info['label']}，但未找到窗口 '{info['keyword']}'")
+            return {"success": False, "message": f"未找到 '{info['keyword']}' 窗口，请确认游戏中已打开或选择其他区服"}
 
     def init_assistant(self) -> dict:
         """初始化助手，查找游戏窗口"""
@@ -516,6 +587,13 @@ class Api:
         from core.events.yuanwang_battle import run_yuanwang_battle
         return run_yuanwang_battle(self.bot, character_name, difficulty, streak)
 
+    def run_xujin_battle(self, character_name: str = '', difficulty: str = '普通', streak: int = 1) -> bool:
+        """虚烬探索"""
+        if self.bot is None:
+            if not self.init_assistant().get('success'): return False
+        from core.events.xujin_battle import run_xujin_battle
+        return run_xujin_battle(self.bot, character_name, difficulty, streak)
+
     def run_guild_remind(self) -> bool:
         """提醒成员签到"""
         if self.bot is None:
@@ -769,6 +847,16 @@ def _is_vite_running() -> bool:
     try:
         urllib.request.urlopen('http://localhost:5173', timeout=1)
         return True
+    except Exception:
+        return False
+
+
+
+
+def _version_newer(a, b):
+    """比较 a >= b，例: _version_newer('1.1.0', '1.0.0') → True"""
+    try:
+        return tuple(int(x) for x in a.split('.')) >= tuple(int(x) for x in b.split('.'))
     except Exception:
         return False
 
