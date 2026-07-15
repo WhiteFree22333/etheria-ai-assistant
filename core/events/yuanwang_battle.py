@@ -79,15 +79,10 @@ def _select_card_by_ocr(bot) -> bool:
     hwnd = bot.game_window.hwnd
     cl = get_client_rect(hwnd)
 
-    import os as _os
     import cv2
-    _dd = _os.path.join(_os.path.dirname(_os.path.dirname(
-        _os.path.dirname(_os.path.abspath(__file__)))), 'debug_screenshots')
-    _os.makedirs(_dd, exist_ok=True)
 
     reader = _get_ocr()
-    # 收集每张牌的匹配关键词
-    card_matches: list[tuple[int, str]] = []  # (牌索引, 关键词)
+    card_matches: list[tuple[int, str]] = []
 
     for i, (cx, cy) in enumerate(_CARD_CLICKS):
         screen_x = cl[0] + cx
@@ -101,10 +96,6 @@ def _select_card_by_ocr(bot) -> bool:
             continue
         rx1, ry1, rx2, ry2 = _CARD_DETAIL_REGION
         roi = img.crop((rx1, ry1, rx2, ry2))
-
-        roi.save(_os.path.join(_dd, f'card_ocr_detail_{i+1}.png'))
-        bot._log(
-            f'Debug: 选牌详情#{i+1} → debug_screenshots/card_ocr_detail_{i+1}.png ({roi.width}x{roi.height})')
 
         gray = cv2.cvtColor(np.array(roi), cv2.COLOR_RGB2GRAY)
         clahe_model = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
