@@ -843,3 +843,120 @@ def run_guild_arena_claim(bot) -> bool:
         return True
     finally:
         bot._running = False
+
+
+# ============================================================
+# 超链终端一键领取
+# ============================================================
+
+def run_guild_hyperchain(bot) -> bool:
+    """
+    超链终端一键领取。
+    1. 回主页 + 开侧边栏
+    2. 超链终端入口 → 一键领取 → exit
+    3. 补给中心 → 开启补给 → exit
+    4. 返回 → 事务所
+    5. 派遣完成 × 多轮点击 → exit → 直到没有
+    """
+    import cv2 as _cv2
+    from core._base.template_match import _imread as _read_tpl
+    hwnd = bot.game_window.hwnd
+    bot._running = True
+    try:
+        bot._log('=' * 40)
+        bot._log('超链终端一键领取开始')
+        bot._log('=' * 40)
+
+        # ---- 1. 导航到首页 ----
+        bot._log('回到主界面...')
+        bot.go_back_to_main(tpl('返回.png'))
+        time.sleep(0.5)
+        if not open_sidebar(bot):
+            return False
+
+        # ---- 2. 超链终端入口 ----
+        bot._log('点击超链终端入口...')
+        pos = wait_for_image(bot, '超链终端入口.png')
+        if pos is None:
+            return False
+        post_click(hwnd, pos[0], pos[1])
+        time.sleep(2)
+
+        # ---- 3. 一键领取 ----
+        bot._log('点击超链终端一键领取...')
+        pos = wait_for_image(bot, '超链终端一键领取.png')
+        if pos is None:
+            return False
+        post_click(hwnd, pos[0], pos[1])
+        time.sleep(2)
+        exit_battle(bot, 30, 30)
+
+        # ---- 4. 补给中心 ----
+        bot._log('点击超链补给中心...')
+        pos = wait_for_image(bot, '超链补给中心.png')
+        if pos is None:
+            return False
+        post_click(hwnd, pos[0], pos[1])
+        time.sleep(2)
+
+        # ---- 5. 开启补给 ----
+        bot._log('点击超链开启补给...')
+        pos = wait_for_image(bot, '超链开启补给.png')
+        if pos is not None:
+            post_click(hwnd, pos[0], pos[1])
+            time.sleep(2)
+        else:
+            bot._log('未检测到超链开启补给，跳过')
+        exit_battle(bot, 30, 30)
+
+        # ---- 6. 返回 → 事务所 ----
+        # bot._log('点击返回...')
+        # pos = wait_for_image(bot, '返回.png')
+        # if pos is None:
+        #     return False
+        # post_click(hwnd, pos[0], pos[1])
+        # time.sleep(1)
+
+        bot._log('点击超链事务所...')
+        pos = wait_for_image(bot, '超链事务所.png')
+        if pos is None:
+            return False
+        post_click(hwnd, pos[0], pos[1])
+        time.sleep(2)
+
+        # ---- 7. 派遣完成 × 多轮 ----
+        tpl_dispatch = _read_tpl(tpl('超链派遣完成.png'))
+        dispatch_found = 0
+        while bot.is_running:
+            img = bot.capture()
+            if img is None or tpl_dispatch is None:
+                break
+            gw = bot.game_window
+            scr = _cv2.cvtColor(np.array(img), _cv2.COLOR_RGB2BGR)
+            result = _cv2.matchTemplate(
+                scr, tpl_dispatch, _cv2.TM_CCOEFF_NORMED)
+            th_d, tw_d = tpl_dispatch.shape[:2]
+            loc = np.where(result >= GAME_CONFIG.template_threshold)
+            pts = []
+            for pt in zip(*loc[::-1]):
+                if not any(abs(pt[0]-p[0]) < 20 and abs(pt[1]-p[1]) < 20 for p in pts):
+                    pts.append(pt)
+            if not pts:
+                bot._log('没有更多派遣完成')
+                break
+            # 只点第一个（最上方），点完 exit，下一轮重新扫描
+            pts.sort(key=lambda p: p[1])
+            cx_w, cy_w = pts[0]
+            sx = gw.left + cx_w + tw_d // 2
+            sy = gw.top + cy_w + th_d // 2
+            bot._log(f'派遣 ({sx}, {sy})')
+            post_click(hwnd, sx, sy)
+            time.sleep(0.5)
+            exit_battle(bot, 30, 30, single_click=True)
+            dispatch_found += 1
+
+        bot._log(f'[OK] 超链终端完成（共{dispatch_found}项派遣）')
+        bot._log('=' * 40)
+        return True
+    finally:
+        bot._running = False

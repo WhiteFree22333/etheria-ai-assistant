@@ -16,6 +16,7 @@ const tasks = ref([
   { id: "remind", label: "提醒成员签到", checked: false, hidden: true },
   { id: "claim_all", label: "任务一键领取", checked: false },
   { id: "anchor_claim", label: "锚点勘测一键领取", checked: false },
+  { id: "hyperchain", label: "超链终端一键领取", checked: false },
 ]);
 
 function toggleAll() {
@@ -42,6 +43,7 @@ const GUILD_TASK_ORDERS: Record<string, number> = {
   theater: 8,
   claim_all: 5,
   assist: 9,
+  hyperchain: 10,
 };
 
 onMounted(() => {

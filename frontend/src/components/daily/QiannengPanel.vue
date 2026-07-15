@@ -13,6 +13,7 @@ const characters = ref([
     totalCount: 1,
     checked: false,
     doubleStamina: false,
+    stamina: 10,
   },
   {
     id: "shenli",
@@ -21,6 +22,7 @@ const characters = ref([
     totalCount: 1,
     checked: false,
     doubleStamina: false,
+    stamina: 10,
   },
   {
     id: "yaoyi",
@@ -29,6 +31,7 @@ const characters = ref([
     totalCount: 1,
     checked: false,
     doubleStamina: false,
+    stamina: 10,
   },
   {
     id: "xukong",
@@ -37,6 +40,7 @@ const characters = ref([
     totalCount: 1,
     checked: false,
     doubleStamina: false,
+    stamina: 10,
   },
   {
     id: "poxu",
@@ -45,6 +49,7 @@ const characters = ref([
     totalCount: 1,
     checked: false,
     doubleStamina: false,
+    stamina: 10,
   },
   {
     id: "hengding",
@@ -53,6 +58,7 @@ const characters = ref([
     totalCount: 1,
     checked: false,
     doubleStamina: false,
+    stamina: 10,
   },
 ]);
 
@@ -93,14 +99,12 @@ onMounted(() => {
 async function startAll() {
   const selected = characters.value.filter((c) => c.checked);
   if (selected.length === 0) {
-    addLog("⚠ 请至少勾选一项");
+    addLog("请至少勾选一项");
     return;
   }
   if (status.value.busy) return;
-
   status.value = { running: true, busy: true };
   addLog(`潜能/经验一键执行: ${selected.map((c) => c.name).join("、")}...`);
-
   try {
     for (const ch of selected) {
       if (!status.value.running) break;
@@ -117,7 +121,7 @@ async function startAll() {
           ch.doubleStamina ?? false
         );
         if (!ok) {
-          addLog(`✗ ${ch.name} 执行失败`);
+          addLog(`${ch.name} 执行失败`);
           break;
         }
         if (i < ch.totalCount - 1)
@@ -127,7 +131,6 @@ async function startAll() {
   } catch (e: any) {
     addLog(`执行异常: ${e}`);
   }
-
   status.value = { running: false, busy: false };
   addLog("一键执行结束");
 }
@@ -147,7 +150,6 @@ async function stopTask() {
       <label v-for="ch in characters" :key="ch.id" class="char-row">
         <input type="checkbox" v-model="ch.checked" class="char-check" />
         <span class="char-name">{{ ch.name }}</span>
-
         <div class="char-field">
           <label class="fl">场次</label>
           <input
@@ -176,13 +178,17 @@ async function stopTask() {
               type="checkbox"
               v-model="ch.doubleStamina"
               class="char-checkbox"
-            />
-            双倍
+            />双倍
           </label>
+        </div>
+        <div class="char-field stamina">
+          <span class="val">{{
+            ch.streak * ch.totalCount * ch.stamina * (ch.doubleStamina ? 2 : 1)
+          }}</span>
+          <span class="unit">体力</span>
         </div>
       </label>
     </div>
-
     <div class="start-area">
       <button class="btn btn-primary" @click="startAll" :disabled="status.busy">
         {{ status.busy ? "执行中..." : "▶ 开始执行" }}
@@ -197,9 +203,8 @@ async function stopTask() {
       <span
         v-if="characters.filter((c) => c.checked).length === 0 && !status.busy"
         class="hint"
+        >请先勾选要执行的项目</span
       >
-        请先勾选要执行的项目
-      </span>
     </div>
   </div>
 </template>
@@ -275,6 +280,20 @@ async function stopTask() {
   height: 16px;
   accent-color: #8b5cf6;
   cursor: pointer;
+}
+.stamina {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.val {
+  font-size: 16px;
+  font-weight: 700;
+  color: #f59e0b;
+}
+.unit {
+  font-size: 11px;
+  color: #666;
+  margin-left: 2px;
 }
 .start-area {
   display: flex;

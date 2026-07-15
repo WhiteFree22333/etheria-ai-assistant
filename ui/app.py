@@ -2,6 +2,14 @@
 游戏 AI 助手 - pywebview 桌面应用
 提供原生窗口 + Vue 3 界面
 """
+import queue
+from core._base.window import GameWindow
+from core._base.selector import select_region_from_fullscreen
+from core._base.capture import save_template, capture_mss
+from core.config import get_dungeon_list, load_env, GAME_CONFIG
+from core._common.bot import GameBot
+import webview
+from PIL import Image
 import sys
 import os
 
@@ -65,17 +73,21 @@ if getattr(sys, 'frozen', False):
         _w.filterwarnings('ignore', message=".*pin_memory.*")
         import inspect as _inspect
         _inspect_getfile_orig = _inspect.getfile
+
         def _patched_getfile(obj):
             try:
                 return _inspect_getfile_orig(obj)
             except Exception:
                 return '<frozen>'
+
         def _patched_getsource(obj):
             n = getattr(obj, '__name__', 'unknown')
             return f'def {n}():\n    pass\n'
+
         def _patched_getsourcelines(obj):
             n = getattr(obj, '__name__', 'unknown')
             return [f'def {n}():\n', '    pass\n'], 1
+
         def _patched_findsource(obj):
             n = getattr(obj, '__name__', 'unknown')
             return [f'def {n}():\n', '    pass\n'], 1
@@ -106,23 +118,16 @@ import traceback
 os.environ['FLAGS_use_mkldnn'] = '0'
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
-from PIL import Image
-import webview
 
 # 确保 core 模块可导入
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, BASE_DIR)
 
-from core._common.bot import GameBot
-from core.config import get_dungeon_list, load_env, GAME_CONFIG
-from core._base.capture import save_template, capture_mss
-from core._base.selector import select_region_from_fullscreen
-from core._base.window import GameWindow
 
 # 日志队列 — 后台线程刷新到前端，避免长 API 调用阻塞 evaluate_js 渲染
-import queue
 _log_queue = queue.Queue()
 _log_window_ref = [None]  # 列表包装，线程安全地引用 window 对象
+
 
 def _log_flusher(window_ref):
     """后台线程：从日志队列取消息，推送到 pywebview 前端。"""
@@ -157,15 +162,16 @@ class Api:
         # 把窗口引用注入 _log_flusher 后台线程
         if _log_window_ref[0] is None:
             _log_window_ref[0] = window
-            threading.Thread(target=_log_flusher, args=(_log_window_ref,), daemon=True).start()
-
+            threading.Thread(target=_log_flusher, args=(
+                _log_window_ref,), daemon=True).start()
 
     def _push_log(self, message: str):
         """推送日志到 JS 前端（通过后台队列避免阻塞）+ 打印到控制台"""
         try:
             print(f"[Api] {message}")
         except UnicodeEncodeError:
-            print(f"[Api] {message.encode('gbk', errors='replace').decode('gbk')}")
+            print(
+                f"[Api] {message.encode('gbk', errors='replace').decode('gbk')}")
 
         # 推入队列，后台线程异步刷新到前端（不阻塞 API 线程）
         _log_queue.put(message)
@@ -188,7 +194,8 @@ class Api:
         """检查 GitHub Releases 是否有新版本。返回 {has_update, version, url}"""
         from core import __version__
         try:
-            import urllib.request, json
+            import urllib.request
+            import json
             req = urllib.request.Request(
                 'https://api.github.com/repos/WhiteFree22333/etheria-ai-assistant/releases/latest',
                 headers={'User-Agent': 'remary-assistant'}
@@ -215,7 +222,7 @@ class Api:
         servers = {
             'cn':    {'label': '国服',   'keyword': '伊瑟'},
             'global': {'label': '国际服', 'keyword': 'Etheria'},
-            'asia':  {'label': '东亚服', 'keyword': '伊瑟'},
+            'asia':  {'label': '东亚服', 'keyword': 'Etheria'},
         }
         if server_key not in servers:
             return {"success": False, "message": f"未知区服: {server_key}"}
@@ -228,10 +235,12 @@ class Api:
         self.bot.window_keyword = info['keyword']
         ok = self.bot.init()
         if ok:
-            self._push_log(f"已切换区服: {info['label']} ({info['keyword']}) — 找到游戏窗口")
+            self._push_log(
+                f"已切换区服: {info['label']} ({info['keyword']}) — 找到游戏窗口")
             return {"success": True, "message": f"已选择 {info['label']}"}
         else:
-            self._push_log(f"已切换区服: {info['label']}，但未找到窗口 '{info['keyword']}'")
+            self._push_log(
+                f"已切换区服: {info['label']}，但未找到窗口 '{info['keyword']}'")
             return {"success": False, "message": f"未找到 '{info['keyword']}' 窗口，请确认游戏中已打开或选择其他区服"}
 
     def init_assistant(self) -> dict:
@@ -343,7 +352,8 @@ class Api:
 
     def list_templates(self, subdir: str = '') -> list:
         """列出所有已保存的模板"""
-        templates_dir = os.path.join(BASE_DIR, 'templates', subdir) if subdir else os.path.join(BASE_DIR, 'templates', 'richang')
+        templates_dir = os.path.join(BASE_DIR, 'templates', subdir) if subdir else os.path.join(
+            BASE_DIR, 'templates', 'richang')
         if not os.path.isdir(templates_dir):
             return []
         return sorted([
@@ -404,7 +414,8 @@ class Api:
             return {"success": False, "message": "选取区域不在游戏窗口内"}
 
         cropped = game_img.crop((game_x, game_y, game_x + rw, game_y + rh))
-        templates_dir = os.path.join(BASE_DIR, 'templates', subdir) if subdir else os.path.join(BASE_DIR, 'templates', 'richang')
+        templates_dir = os.path.join(BASE_DIR, 'templates', subdir) if subdir else os.path.join(
+            BASE_DIR, 'templates', 'richang')
         os.makedirs(templates_dir, exist_ok=True)
         filepath = save_template(cropped, name, templates_dir)
 
@@ -427,7 +438,8 @@ class Api:
             if not result["success"]:
                 return None
 
-        template_path = os.path.join(BASE_DIR, 'templates', 'richang', template_name)
+        template_path = os.path.join(
+            BASE_DIR, 'templates', 'richang', template_name)
         if not os.path.exists(template_path):
             return None
 
@@ -441,7 +453,8 @@ class Api:
             if not result["success"]:
                 return False
 
-        template_path = os.path.join(BASE_DIR, 'templates', 'richang', template_name)
+        template_path = os.path.join(
+            BASE_DIR, 'templates', 'richang', template_name)
         if not os.path.exists(template_path):
             return False
 
@@ -463,7 +476,8 @@ class Api:
             if not result["success"]:
                 return False
 
-        template_path = os.path.join(BASE_DIR, 'templates', 'richang', back_template)
+        template_path = os.path.join(
+            BASE_DIR, 'templates', 'richang', back_template)
         if not os.path.exists(template_path):
             print(f"[Api] 模板不存在: {template_path}")
             return False
@@ -476,7 +490,8 @@ class Api:
         调用 core/zhike_battle.py 中的完整流程：
         主页 → Tab侧边栏 → 挑战 → 智壳掉落 → 滚轮翻角色 → 选难度 → 设次数 → 确认
         """
-        print(f"[Api] run_zhike_battle 被调用，角色: {character_name}, 难度: {difficulty}, 场次: {streak}")
+        print(
+            f"[Api] run_zhike_battle 被调用，角色: {character_name}, 难度: {difficulty}, 场次: {streak}")
         print(f"[Api] self.bot = {self.bot}")
 
         if self.bot is None:
@@ -513,7 +528,8 @@ class Api:
 
     def run_yuanqi_battle(self, character_name: str, difficulty: str = '地狱四', streak: int = 1, double_stamina: bool = False) -> bool:
         """执行源器战斗流程。"""
-        print(f"[Api] run_yuanqi_battle 被调用，角色: {character_name}, 双倍: {double_stamina}")
+        print(
+            f"[Api] run_yuanqi_battle 被调用，角色: {character_name}, 双倍: {double_stamina}")
         if self.bot is None:
             result = self.init_assistant()
             if not result["success"]:
@@ -525,7 +541,8 @@ class Api:
     def run_qianneng_battle(self, character_name: str = "", difficulty: str = "", streak: int = 1, double_stamina: bool = False) -> bool:
         """潜能/经验"""
         if self.bot is None:
-            if not self.init_assistant().get('success'): return False
+            if not self.init_assistant().get('success'):
+                return False
         from core.daily.qianneng_battle import run_qianneng_battle
         return run_qianneng_battle(self.bot, character_name, difficulty, streak, double_stamina)
 
@@ -533,35 +550,40 @@ class Api:
     def run_guild_arena(self) -> bool:
         """竞技场自动"""
         if self.bot is None:
-            if not self.init_assistant().get('success'): return False
+            if not self.init_assistant().get('success'):
+                return False
         from core.daily.guild_battle import run_guild_arena
         return run_guild_arena(self.bot)
 
     def run_guild_signin(self) -> bool:
         """公会签到"""
         if self.bot is None:
-            if not self.init_assistant().get('success'): return False
+            if not self.init_assistant().get('success'):
+                return False
         from core.daily.guild_battle import run_guild_signin
         return run_guild_signin(self.bot)
 
     def run_guild_anchor(self) -> bool:
         """锚点勘测"""
         if self.bot is None:
-            if not self.init_assistant().get('success'): return False
+            if not self.init_assistant().get('success'):
+                return False
         from core.daily.guild_battle import run_guild_anchor
         return run_guild_anchor(self.bot)
 
     def run_guild_weekly(self) -> bool:
         """公会每周任务领取"""
         if self.bot is None:
-            if not self.init_assistant().get('success'): return False
+            if not self.init_assistant().get('success'):
+                return False
         from core.daily.guild_battle import run_guild_weekly
         return run_guild_weekly(self.bot)
 
     def run_guild_assist(self) -> bool:
         """协会共助"""
         if self.bot is None:
-            if not self.init_assistant().get('success'): return False
+            if not self.init_assistant().get('success'):
+                return False
         from core.daily.guild_battle import run_guild_assist
         return run_guild_assist(self.bot)
 
@@ -569,35 +591,40 @@ class Api:
     def run_anlong_battle(self, character_name: str = '', difficulty: str = '普通', streak: int = 1) -> bool:
         """暗笼激斗"""
         if self.bot is None:
-            if not self.init_assistant().get('success'): return False
+            if not self.init_assistant().get('success'):
+                return False
         from core.events.anlong_battle import run_anlong_battle
         return run_anlong_battle(self.bot, character_name, difficulty, streak)
 
     def run_chaoneng_battle(self, character_name: str = '', difficulty: str = '普通', streak: int = 1) -> bool:
         """超能二十一"""
         if self.bot is None:
-            if not self.init_assistant().get('success'): return False
+            if not self.init_assistant().get('success'):
+                return False
         from core.events.chaoneng_battle import run_chaoneng_battle
         return run_chaoneng_battle(self.bot, character_name, difficulty, streak)
 
     def run_yuanwang_battle(self, character_name: str = '', difficulty: str = '普通', streak: int = 1) -> bool:
         """源网征令"""
         if self.bot is None:
-            if not self.init_assistant().get('success'): return False
+            if not self.init_assistant().get('success'):
+                return False
         from core.events.yuanwang_battle import run_yuanwang_battle
         return run_yuanwang_battle(self.bot, character_name, difficulty, streak)
 
     def run_xujin_battle(self, character_name: str = '', difficulty: str = '普通', streak: int = 1) -> bool:
         """虚烬探索"""
         if self.bot is None:
-            if not self.init_assistant().get('success'): return False
+            if not self.init_assistant().get('success'):
+                return False
         from core.events.xujin_battle import run_xujin_battle
         return run_xujin_battle(self.bot, character_name, difficulty, streak)
 
     def run_guild_remind(self) -> bool:
         """提醒成员签到"""
         if self.bot is None:
-            if not self.init_assistant().get('success'): return False
+            if not self.init_assistant().get('success'):
+                return False
         from core.daily.guild_battle import run_guild_remind
         return run_guild_remind(self.bot)
 
@@ -613,7 +640,8 @@ class Api:
         if self.bot.game_window is None:
             print("[Api] game_window is None")
             return {"success": False, "message": "游戏窗口未找到"}
-        import win32gui, win32con
+        import win32gui
+        import win32con
         hwnd = self.bot.game_window.hwnd
         print(f"[Api] hwnd={hwnd}")
         win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
@@ -628,41 +656,57 @@ class Api:
     def test_stamina_check(self) -> bool:
         """测试：体力库存识别"""
         if self.bot is None:
-            if not self.init_assistant().get('success'): return False
+            if not self.init_assistant().get('success'):
+                return False
         from core.daily.guild_battle import run_test_stamina_check
         return run_test_stamina_check(self.bot)
 
     def run_guild_arena_claim(self) -> bool:
         """竞技场一键领取"""
         if self.bot is None:
-            if not self.init_assistant().get('success'): return False
+            if not self.init_assistant().get('success'):
+                return False
         from core.daily.guild_battle import run_guild_arena_claim
         return run_guild_arena_claim(self.bot)
 
     def run_guild_anchor_claim(self) -> bool:
         """锚点勘测一键领取"""
         if self.bot is None:
-            if not self.init_assistant().get('success'): return False
+            if not self.init_assistant().get('success'):
+                return False
         from core.daily.guild_battle import run_guild_anchor_claim
         return run_guild_anchor_claim(self.bot)
+
+    def run_guild_hyperchain(self) -> bool:
+        """超链终端一键领取"""
+        if self.bot is None:
+            if not self.init_assistant().get('success'):
+                return False
+        from core.daily.guild_battle import run_guild_hyperchain
+        return run_guild_hyperchain(self.bot)
 
     def run_guild_claim_all(self) -> bool:
         """一键领取"""
         if self.bot is None:
-            if not self.init_assistant().get('success'): return False
+            if not self.init_assistant().get('success'):
+                return False
         from core.daily.guild_battle import run_guild_claim_all
         return run_guild_claim_all(self.bot)
 
     def run_guild_theater(self) -> bool:
         """幻音剧场"""
         if self.bot is None:
-            if not self.init_assistant().get("success"): return False
+            if not self.init_assistant().get("success"):
+                return False
         from core.daily.guild_battle import run_guild_theater
         return run_guild_theater(self.bot)
 
     def debug_exit_point(self, offset_x: int = 60, offset_y: int = 60) -> str:
         """[开发用] 截图标注退出点击位置，调试坐标时使用"""
-        import base64, io, cv2, numpy as np
+        import base64
+        import io
+        import cv2
+        import numpy as np
         if self.bot is None:
             r = self.init_assistant()
             if not r['success']:
@@ -675,7 +719,8 @@ class Api:
         x, y = offset_x, gw.height - offset_y
         cv2.circle(arr, (x, y), 12, (0, 0, 255), 2)
         cv2.circle(arr, (x, y), 4, (0, 0, 255), -1)
-        cv2.putText(arr, f'({x},{y})', (x + 18, y + 5), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 1)
+        cv2.putText(arr, f'({x},{y})', (x + 18, y + 5),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 1)
         import os as _os
         dd = _os.path.join(BASE_DIR, 'debug_screenshots')
         _os.makedirs(dd, exist_ok=True)
@@ -695,7 +740,11 @@ class Api:
             if not r['success']:
                 self._push_log('[FAIL] 未找到游戏窗口')
                 return ''
-        import base64 as _b64, io, cv2 as _cv2, numpy as _np, os as _os
+        import base64 as _b64
+        import io
+        import cv2 as _cv2
+        import numpy as _np
+        import os as _os
         gw = self.bot.game_window
         _dd = _os.path.join(BASE_DIR, 'debug_screenshots')
         _os.makedirs(_dd, exist_ok=True)
@@ -706,7 +755,8 @@ class Api:
             from core._base.capture import capture_dxcam
             img = capture_dxcam(gw)
             if img is not None:
-                _cv2.imwrite(_os.path.join(_dd, 'bg_test_1_dxcam.png'), _cv2.cvtColor(_np.array(img), _cv2.COLOR_RGB2BGR))
+                _cv2.imwrite(_os.path.join(_dd, 'bg_test_1_dxcam.png'),
+                             _cv2.cvtColor(_np.array(img), _cv2.COLOR_RGB2BGR))
                 results['1_dxcam'] = 'OK'
             else:
                 results['1_dxcam'] = 'FAIL(None)'
@@ -718,7 +768,8 @@ class Api:
             from core._base.capture import capture_printwindow_pca
             img = capture_printwindow_pca(gw.hwnd, gw)
             if img is not None:
-                _cv2.imwrite(_os.path.join(_dd, 'bg_test_2_printwindow.png'), _cv2.cvtColor(_np.array(img), _cv2.COLOR_RGB2BGR))
+                _cv2.imwrite(_os.path.join(_dd, 'bg_test_2_printwindow.png'), _cv2.cvtColor(
+                    _np.array(img), _cv2.COLOR_RGB2BGR))
                 results['2_printwindow'] = 'OK'
             else:
                 results['2_printwindow'] = 'FAIL(None)'
@@ -730,7 +781,8 @@ class Api:
             from core._base.capture import capture_bitblt
             img = capture_bitblt(gw.hwnd, gw)
             if img is not None:
-                _cv2.imwrite(_os.path.join(_dd, 'bg_test_3_bitblt.png'), _cv2.cvtColor(_np.array(img), _cv2.COLOR_RGB2BGR))
+                _cv2.imwrite(_os.path.join(_dd, 'bg_test_3_bitblt.png'),
+                             _cv2.cvtColor(_np.array(img), _cv2.COLOR_RGB2BGR))
                 results['3_bitblt'] = 'OK'
             else:
                 results['3_bitblt'] = 'FAIL(None)'
@@ -742,7 +794,8 @@ class Api:
             from core._base.capture import capture_mss
             img = capture_mss(gw)
             if img is not None:
-                _cv2.imwrite(_os.path.join(_dd, 'bg_test_4_mss.png'), _cv2.cvtColor(_np.array(img), _cv2.COLOR_RGB2BGR))
+                _cv2.imwrite(_os.path.join(_dd, 'bg_test_4_mss.png'),
+                             _cv2.cvtColor(_np.array(img), _cv2.COLOR_RGB2BGR))
                 results['4_mss'] = 'OK'
             else:
                 results['4_mss'] = 'FAIL(None)'
@@ -750,12 +803,14 @@ class Api:
             results['4_mss'] = f'FAIL({e})'
 
         self._push_log(f'背景截图测试: {results}')
-        self._push_log(f'截图已保存 debug_screenshots/bg_test_*.png — 请在被遮挡+不被遮挡两种情况下各测一次，对比四张图')
+        self._push_log(
+            f'截图已保存 debug_screenshots/bg_test_*.png — 请在被遮挡+不被遮挡两种情况下各测一次，对比四张图')
         return ''
 
     def delete_template(self, template_name: str) -> bool:
         """删除模板文件"""
-        template_path = os.path.join(BASE_DIR, 'templates', 'richang', template_name)
+        template_path = os.path.join(
+            BASE_DIR, 'templates', 'richang', template_name)
         if os.path.exists(template_path):
             os.remove(template_path)
             return True
@@ -780,18 +835,23 @@ def on_loaded(*_args):
         pass
 
     # 设置窗口图标
-    import win32gui, win32con
+    import win32gui
+    import win32con
     ico_path = os.path.join(BASE_DIR, 'app.ico')
     if os.path.exists(ico_path):
         try:
-            hwnd = win32gui.FindWindow(None, '瑞玛丽小助手V1.0')
+            hwnd = win32gui.FindWindow(None, '瑞玛丽小助手V1.1')
             if hwnd:
                 big = win32gui.LoadImage(None, ico_path, win32con.IMAGE_ICON, 0, 0,
-                    win32con.LR_LOADFROMFILE | win32con.LR_DEFAULTSIZE)
+                                         win32con.LR_LOADFROMFILE | win32con.LR_DEFAULTSIZE)
                 small = win32gui.LoadImage(None, ico_path, win32con.IMAGE_ICON, 16, 16,
-                    win32con.LR_LOADFROMFILE)
-                if big: win32gui.SendMessage(hwnd, win32con.WM_SETICON, win32con.ICON_BIG, big)
-                if small: win32gui.SendMessage(hwnd, win32con.WM_SETICON, win32con.ICON_SMALL, small)
+                                           win32con.LR_LOADFROMFILE)
+                if big:
+                    win32gui.SendMessage(
+                        hwnd, win32con.WM_SETICON, win32con.ICON_BIG, big)
+                if small:
+                    win32gui.SendMessage(
+                        hwnd, win32con.WM_SETICON, win32con.ICON_SMALL, small)
                 print('[App] 窗口图标已设置')
         except Exception as e:
             print(f'[App] 图标设置失败: {e}')
@@ -851,8 +911,6 @@ def _is_vite_running() -> bool:
         return False
 
 
-
-
 def _version_newer(a, b):
     """比较 a >= b，例: _version_newer('1.1.0', '1.0.0') → True"""
     try:
@@ -865,7 +923,8 @@ def run():
     """启动桌面应用"""
     # 告诉 Windows：这不是普通 Python 进程，是独立应用（影响任务栏图标）
     import ctypes
-    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('remary.assistant.v1')
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+        'remary.assistant.v1')
 
     api = Api()
 
@@ -888,7 +947,9 @@ def run():
         else:
             # 尝试启动本地 HTTP 服务器避免 file:// 中文路径编码问题
             try:
-                import http.server, socket, threading
+                import http.server
+                import socket
+                import threading
                 _port = None
                 for _p in range(49152, 49216):
                     try:
@@ -902,8 +963,10 @@ def run():
                     class _StaticHandler(http.server.SimpleHTTPRequestHandler):
                         def __init__(self, *args, **kwargs):
                             super().__init__(*args, directory=static_dir, **kwargs)
-                    _httpd = http.server.HTTPServer(('127.0.0.1', _port), _StaticHandler)
-                    threading.Thread(target=_httpd.serve_forever, daemon=True).start()
+                    _httpd = http.server.HTTPServer(
+                        ('127.0.0.1', _port), _StaticHandler)
+                    threading.Thread(
+                        target=_httpd.serve_forever, daemon=True).start()
                     url = f'http://127.0.0.1:{_port}/index.html'
                 else:
                     _errors.append('无法绑定 HTTP 端口')
@@ -922,7 +985,7 @@ def run():
             url = f'data:text/html,<html><body style="background:#1a1a2e;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif"><div style="text-align:center"><h2>⚠️ 加载失败</h2><p>{"<br>".join(_errors)}</p></div></body></html>'
 
     window = webview.create_window(
-        title='瑞玛丽小助手V1.0',
+        title='瑞玛丽小助手V1.1',
         url=url,
         js_api=api,
         width=980,
@@ -934,7 +997,8 @@ def run():
 
     api.set_window(window)
 
-    webview.start(on_loaded, window, debug=('--debug' in sys.argv), gui='edgechromium')
+    webview.start(on_loaded, window, debug=(
+        '--debug' in sys.argv), gui='edgechromium')
 
 
 if __name__ == '__main__':

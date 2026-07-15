@@ -179,23 +179,6 @@ def run_xujin_battle(bot, character_name: str = '', difficulty: str = '普通', 
             if skip_to_step8:
                 bot._log('未检测到自动挑战，跳过步骤 6-7 直接进入步骤 8')
             else:
-                # DEBUG: 保存截图看点击位置
-                import cv2 as _cvdbg
-                _dd2 = os.path.join(os.path.dirname(os.path.dirname(
-                    os.path.dirname(os.path.abspath(__file__)))), 'debug_screenshots')
-                os.makedirs(_dd2, exist_ok=True)
-                dbg_img = bot.capture()
-                if dbg_img is not None:
-                    arr2 = _cvdbg.cvtColor(
-                        np.array(dbg_img), _cvdbg.COLOR_RGB2BGR)
-                    _cvdbg.circle(
-                        arr2, (pos[0] - bot.game_window.left, pos[1] - bot.game_window.top), 8, (0, 0, 255), -1)
-                    _cvdbg.putText(arr2, f'click({pos[0]},{pos[1]})', (pos[0] - bot.game_window.left + 12, pos[1] - bot.game_window.top + 4),
-                                   _cvdbg.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
-                    _cvdbg.imwrite(os.path.join(
-                        _dd2, 'xujin_autochallenge_click.png'), arr2)
-                    bot._log(
-                        f'Debug: 自动挑战点击标注 → debug_screenshots/xujin_autochallenge_click.png')
                 post_click(hwnd, pos[0], pos[1])
                 time.sleep(2)
 
