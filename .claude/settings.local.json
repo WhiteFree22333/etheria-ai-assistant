@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "WebSearch",
-      "Bash(python -c \"import py_compile; py_compile.compile\\('core/events/xujin_battle.py', doraise=True\\); print\\('OK'\\)\")"
-    ]
-  }
-}
