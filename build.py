@@ -27,7 +27,7 @@ run("python -m PyInstaller YiseAssistant.spec --noconfirm",
 
 # Step 3: zip dist
 dist_dir = os.path.join(ROOT, "dist", "瑞玛丽小助手")
-zip_path = os.path.join(ROOT, "dist", "瑞玛丽小助手_V1.2日志版.zip")
+zip_path = os.path.join(ROOT, "dist", "瑞玛丽小助手_V1.3.zip")
 if os.path.exists(zip_path):
     os.remove(zip_path)
 print(f"\n{'='*50}")

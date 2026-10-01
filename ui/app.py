@@ -587,6 +587,16 @@ class Api:
         from core.daily.guild_battle import run_guild_assist
         return run_guild_assist(self.bot)
 
+    # ======== 主线 ========
+    def run_zhuxian_battle(self, character_name: str = '', difficulty: str = '普通', streak: int = 1,
+                           double_stamina: bool = False) -> bool:
+        """主线剧情"""
+        if self.bot is None:
+            if not self.init_assistant().get('success'):
+                return False
+        from core.main.zhuxian_battle import run_zhuxian_battle
+        return run_zhuxian_battle(self.bot, character_name, difficulty, streak, double_stamina)
+
     # ======== 活动 ========
     def run_anlong_battle(self, character_name: str = '', difficulty: str = '普通', streak: int = 1) -> bool:
         """暗笼激斗"""
@@ -849,7 +859,7 @@ def on_loaded(*_args):
     ico_path = os.path.join(BASE_DIR, 'app.ico')
     if os.path.exists(ico_path):
         try:
-            hwnd = win32gui.FindWindow(None, '瑞玛丽小助手V1.2')
+            hwnd = win32gui.FindWindow(None, '瑞玛丽小助手V1.3')
             if hwnd:
                 big = win32gui.LoadImage(None, ico_path, win32con.IMAGE_ICON, 0, 0,
                                          win32con.LR_LOADFROMFILE | win32con.LR_DEFAULTSIZE)
@@ -921,9 +931,13 @@ def _is_vite_running() -> bool:
 
 
 def _version_newer(a, b):
-    """比较 a >= b，例: _version_newer('1.1.0', '1.0.0') → True"""
+    """比较 a > b（严格大于），例: _version_newer('1.1.0', '1.0.0') → True
+
+    注意这里是「严格大于」，不是「大于等于」：相等时必须返回 False，
+    否则自己装的版本和线上最新版相同时，会误报「发现新版本」。
+    """
     try:
-        return tuple(int(x) for x in a.split('.')) >= tuple(int(x) for x in b.split('.'))
+        return tuple(int(x) for x in a.split('.')) > tuple(int(x) for x in b.split('.'))
     except Exception:
         return False
 
@@ -994,7 +1008,7 @@ def run():
             url = f'data:text/html,<html><body style="background:#1a1a2e;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif"><div style="text-align:center"><h2>⚠️ 加载失败</h2><p>{"<br>".join(_errors)}</p></div></body></html>'
 
     window = webview.create_window(
-        title='瑞玛丽小助手V1.2',
+        title='瑞玛丽小助手V1.3',
         url=url,
         js_api=api,
         width=980,

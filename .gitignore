@@ -14,6 +14,9 @@ dist/
 .vscode/
 .idea/
 
+# Claude Code 本地设置（.local = 只属于这台机器，每个人的都不一样）
+.claude/settings.local.json
+
 # 环境变量
 .env
 
@@ -29,3 +32,12 @@ Thumbs.db
 frontend/node_modules/
 frontend/.npm-cache/
 frontend/dist/
+
+# sfetheria：BP 助手工具链（半成品，暂不入库，只留在本地）
+# 整个目录连 README 一起忽略。若哪天想让 README 入库：删掉下面 data/sfetheria/ 这行，
+# 换成 "data/sfetheria/*" + "!data/sfetheria/README.md" 两行即可。
+data/sfetheria/
+scripts/sfetheria/
+
+# 一次性实验/探针草稿（_exp_* / _probe_* / _verify_*），不是正式代码
+scripts/oneoff/_*

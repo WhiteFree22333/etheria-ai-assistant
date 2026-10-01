@@ -4,7 +4,7 @@
 全 PostMessage 后台点击，零键盘依赖。
 """
 from core.config import GAME_CONFIG
-from core._common.battle_common import tpl, wait_for_image, open_sidebar, setup_preset, enter_and_wait_battle, exit_battle, enter_guild_home, _init_easyocr_reader
+from core._common.battle_common import tpl, wait_for_image, open_sidebar, setup_preset, enter_and_wait_battle, exit_battle, exit_battle_verified, enter_guild_home, _init_easyocr_reader
 from core._base.input import post_click
 from PIL import Image
 import numpy as np
@@ -209,7 +209,9 @@ def run_guild_anchor(bot) -> bool:
         if not enter_and_wait_battle(bot, 'Buff.png'):
             return False
         time.sleep(4)
-        exit_battle(bot, 30, 30)
+        # 这里也会偶尔丢点击，用带校验的版本：点完「战斗统计」还在就补点。
+        # 锚点勘测打完弹的就是通用战斗结算面板，和主线同一个界面，共用这张图。
+        exit_battle_verified(bot, '战斗统计.png', 30, 30)
         bot._log('[OK] 锚点勘测完成')
         bot._log('=' * 40)
         return True

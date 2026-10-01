@@ -534,6 +534,48 @@ def exit_battle(bot, offset_x=None, offset_y=None, exit_wait=GAME_CONFIG.exit_ba
     time.sleep(exit_wait)
 
 
+def exit_battle_verified(bot, check_template, offset_x=None, offset_y=None,
+                         single_click=False, max_clicks=3):
+    """点左下角退出，并校验真的退出去了；没退出去就补点。
+
+    为什么需要它：exit_battle 是全项目唯一「点完不校验」的点击。别的地方点完后面都跟着
+    wait_for_image 等下一屏，点空了下一轮还会重来；它点空了就是永久性的 —— 实测程序
+    跑久了偶尔会丢这一次点击（原因见 post_click 里那句裸的 SetForegroundWindow）。
+
+    Args:
+        check_template: 「还停在结算界面」的标志图，如 战斗统计.png。传模板名（去
+            templates/richang/ 找）或完整路径都行，和 wait_for_image 一个规矩。
+        max_clicks: 最多点几次（首次 + 补点）。
+
+    判据是反的，别搞混：check_template 在屏幕上 = 没退出去 = 要补点；
+    找不到 = 已经退出去了 = 正常返回。
+    所以万一判据图选错了（换了个界面），它会退化成「没校验」，不会乱补点。
+
+    用单帧 find_image 而不是 wait_for_image：后者超时会走 MSS 前台截图兜底，还会打一串
+    「超时…未检测到…最终失败」—— 正常退出时它本来就该找不到，每次都刷这几行日志，
+    而且白等一个 image_wait_timeout。
+
+    exit_battle 收尾自己 sleep(exit_wait) 了，所以判据在它之后看就行，不用额外等。
+    """
+    template_path = check_template
+    if not (os.path.isabs(check_template) or '/' in check_template
+            or '\\' in check_template):
+        template_path = tpl(check_template)
+
+    for click_no in range(1, max_clicks + 1):
+        exit_battle(bot, offset_x, offset_y, single_click=single_click)
+        # 校验完必须明确报一行结果 —— 不能只在补点时出声。
+        # bot.find_image 自己那行「未找到匹配图标」不带是谁在找，光看日志分不出是这里的
+        # 校验、还是后面在轮询等别的图，会让人以为这段没执行。
+        if bot.find_image(template_path) is None:
+            bot._log(f'已退出结算界面（第 {click_no} 次点击生效）')
+            return True
+        if click_no < max_clicks:
+            bot._log('[WARN] 还在结算界面，退出点击没生效，补点重试...')
+    bot._log(f'[FAIL] 点了 {max_clicks} 次仍停在结算界面，可能不是点击没生效')
+    return False
+
+
 # ============================================================
 # 颜色查找 → 返回所有匹配像素的中心坐标（通用蓝点检测等）
 # ============================================================

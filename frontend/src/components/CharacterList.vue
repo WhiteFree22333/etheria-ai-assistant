@@ -15,6 +15,7 @@ const props = withDefaults(
     showTotalCount?: boolean;
     showStamina?: boolean;
     showDoubleStamina?: boolean;
+    doubleStaminaLabel?: string;
     staminaPerBattle?: number | ((ch: Character) => number);
     maxCount?: number;
   }>(),
@@ -25,6 +26,7 @@ const props = withDefaults(
     showTotalCount: true,
     showStamina: true,
     showDoubleStamina: false,
+    doubleStaminaLabel: "双倍",
     staminaPerBattle: 10,
     maxCount: 99,
   }
@@ -145,7 +147,7 @@ defineExpose({ selected });
               v-model="ch.doubleStamina"
               class="char-check"
             />
-            双倍
+            {{ doubleStaminaLabel }}
           </label>
         </div>
 

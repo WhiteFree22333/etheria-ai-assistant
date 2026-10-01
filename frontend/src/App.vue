@@ -8,6 +8,7 @@ import Sidebar from './components/Sidebar.vue'
 import DailyPage from './components/DailyPage.vue'
 import EventPage from './components/EventPage.vue'
 import ShilianPage from './components/ShilianPage.vue'
+import ZhuxianPage from './components/ZhuxianPage.vue'
 import RtaPage from './components/RtaPage.vue'
 import ControlBar from './components/ControlBar.vue'
 import LogPanel from './components/LogPanel.vue'
@@ -22,6 +23,7 @@ const { registerTask } = useGlobalRun()
 
 const tabs = [
   { id: 'daily', label: '日常', icon: '📋' },
+  { id: 'zhuxian', label: '主线', icon: '📖' },
   { id: 'shilian', label: '试炼', icon: '⚔️' },
   { id: 'events', label: '活动', icon: '🎉' },
   { id: 'rta', label: 'RTA', icon: '⚡' },
@@ -68,6 +70,7 @@ async function checkUpdate() {
       <Sidebar :tabs="tabs" :active="activeTab" @select="activeTab = $event" />
       <div class="main">
         <DailyPage v-show="activeTab === 'daily'" />
+        <ZhuxianPage v-show="activeTab === 'zhuxian'" />
         <ShilianPage v-show="activeTab === 'shilian'" />
         <EventPage v-show="activeTab === 'events'" />
         <RtaPage v-show="activeTab === 'rta'" />
