@@ -1020,8 +1020,39 @@ def run():
 
     api.set_window(window)
 
-    webview.start(on_loaded, window, debug=(
-        '--debug' in sys.argv), gui='edgechromium')
+    try:
+        webview.start(on_loaded, window, debug=(
+            '--debug' in sys.argv), gui='edgechromium')
+    except Exception as e:
+        _show_startup_error(e)
+
+
+def _show_startup_error(err):
+    """界面起不来时弹个中文提示，别让用户只看到黑框里滚过去的英文。
+
+    为什么要这个：edgechromium 后端要用户电脑装有「Microsoft Edge WebView2
+    运行时」（Win11 自带，Win10 一般跟着 Edge 一起来）。缺了程序会直接抛异常
+    退出，玩家只会说「打不开」，你远程也没法判断。
+
+    注意它接不住「缺 VC++ 运行库」那种情况 —— 那种是进程还没跑到 Python 就死了，
+    这里根本没有机会执行。所以运行库是直接打进包里的（见 YiseAssistant.spec）。
+    """
+    msg = str(err)
+    hint = ''
+    if 'webview2' in msg.lower():
+        hint = ('看起来是缺少「Microsoft Edge WebView2 运行时」。\n'
+                '装一下再试：\n'
+                'https://developer.microsoft.com/microsoft-edge/webview2/\n\n')
+    try:
+        import ctypes
+        ctypes.windll.user32.MessageBoxW(
+            None, f'{hint}程序启动失败：\n{msg[:500]}',
+            '瑞玛丽小助手 启动失败', 0x10)  # 0x10 = 红色错误图标
+    except Exception:
+        pass
+    print(f'[App] 启动失败: {msg}')
+    import traceback
+    traceback.print_exc()
 
 
 if __name__ == '__main__':
