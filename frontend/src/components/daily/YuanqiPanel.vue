@@ -23,7 +23,7 @@ const registerTask = inject<(order: number, name: string, fn: () => Promise<bool
 function getApi() { return window.pywebview?.api; }
 
 onMounted(() => {
-  registerTask(11, '源器', async () => {
+  registerTask(13, '源器', async () => {
     const selected = characters.value.filter(c => c.checked);
     if (selected.length === 0) return true;
     const api = window.pywebview?.api as any;

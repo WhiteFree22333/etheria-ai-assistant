@@ -60,7 +60,7 @@
 
 ## 快速开始（玩家）
 
-1. **下载** `瑞玛丽小助手_V1.3.zip` 并解压，下载地址：(https://github.com/WhiteFree22333/etheria-ai-assistant/releases/download/v1.3.0/瑞玛丽小助手_V1.3.zip)
+1. **下载** `瑞玛丽小助手_V1.3.zip` 并解压，下载地址：(https://jcndt0fbap7l.feishu.cn/wiki/AM2kwUeYdiPX9vkN9VgczLJ8nZd)
    如果过期可以加主包 qq 联系更新，qq：1339151876
 2. **管理原权限启动** `瑞玛丽小助手.exe`
 3. **启动伊瑟游戏**，确认窗口标题包含 "伊瑟"

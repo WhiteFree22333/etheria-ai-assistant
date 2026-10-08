@@ -76,7 +76,7 @@ function getApi() {
 }
 
 onMounted(() => {
-  registerTask(12, "潜能/经验", async () => {
+  registerTask(14, "潜能/经验", async () => {
     const selected = characters.value.filter((c) => c.checked);
     if (selected.length === 0) return true;
     const api = window.pywebview?.api as any;

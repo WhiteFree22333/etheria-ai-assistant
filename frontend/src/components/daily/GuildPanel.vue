@@ -33,6 +33,8 @@ function getApi() {
   return window.pywebview?.api;
 }
 
+// 一键执行的序号，全局共用（见 composables/useGlobalRun.ts），按数字从小到大跑。
+// 注意这里的 1~9 会排在「智壳(10)」之前。
 const GUILD_TASK_ORDERS: Record<string, number> = {
   arena: 1,
   arena_claim: 2,
@@ -41,9 +43,9 @@ const GUILD_TASK_ORDERS: Record<string, number> = {
   anchor_claim: 6,
   weekly: 7,
   theater: 8,
-  claim_all: 5,
   assist: 9,
-  hyperchain: 10,
+  claim_all: 11,
+  hyperchain: 12,
 };
 
 onMounted(() => {
